@@ -12,12 +12,12 @@
 #include <string.h> /* memset() */
 #include <stdlib.h>
 #include <time.h>
-#include "sendto_h"
+#include "sendto_.h"
 
 int main(int argc, char *argv[]) {
 
 	/* check command line args. */
-	if(argc<6) {
+	if ( argc < 6 ) {
 		printf("usage : %s <server_port> <error rate> <random seed> <send_file> <send_log> \n", argv[0]);
 		exit(1);
 	}
@@ -28,7 +28,8 @@ int main(int argc, char *argv[]) {
 	printf("error rate : %f\n",atof(argv[2]));
 
 	/* socket creation */
-	if((sd=socket(**** CALL SOCKET() HERE TO CREATE A UDP SOCKET ****))<0)
+    int sd;
+	if( ( sd = socket(AF_INET, SOCK_DGRAM, PF_INET) ) < 0 )
 	{
 		printf("%s: cannot open socket \n",argv[0]);
 		exit(1);
@@ -40,9 +41,9 @@ int main(int argc, char *argv[]) {
 	servAddr.sin_family = AF_INET;                   //address family
 	servAddr.sin_port = htons(atoi(argv[1]));        //htons() sets the port # to network byte order
 	servAddr.sin_addr.s_addr = INADDR_ANY;           //supplies the IP address of the local machine
-	if(bind(**** CALL BIND() HERE TO BIND SOCKET TO PORT ****)<0)
-	{
-		printf("%s: cannot to bind port number %d \n",argv[0], argv[1]);
+
+	if ( bind(sd, (struct sockaddr*)&servAddr, sizeof( servAddr )) < 0 ) {
+		printf("%s: cannot to bind port number %s\n", argv[0], argv[1]);
 		exit(1); 
 	}
 
@@ -50,10 +51,11 @@ int main(int argc, char *argv[]) {
 	struct sockaddr_in cliAddr;
 	unsigned int cliLen;
 	int nbytes;
+
 	char recvmsg[100];
 	bzero(recvmsg,sizeof(recvmsg));
 	cliLen = sizeof(cliAddr);
-	nbytes = recvfrom(sd, &rcvmsg, sizeof (recvmsg), 0, (struct sockaddr *) &cliAddr, &cliLen);
+	nbytes = recvfrom(sd, &recvmsg, sizeof (recvmsg), 0, (struct sockaddr *) &cliAddr, &cliLen);
 	
 	/* Respond using sendto_ in order to simulate dropped packets */
 	char response[] = "respond this";

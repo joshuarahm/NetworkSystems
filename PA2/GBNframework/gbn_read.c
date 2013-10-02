@@ -1,9 +1,9 @@
 #include <stdlib.h>
 #include "gbn_socket.h"
 
-#define get_send_frame(sock, index) sock->_m_sending_window._m_packet_buffer[(sock->_m_sending_window._m_head+index)%sock->_m_sending_window._m_size]
+#define get_send_frame(sock, index) sock->_m_sending_window._m_packet_buffer[(sock->_m_sending_window._m_head+index)%DEFAULT_QUEUE_SIZE]
 #define get_send_size(sock) sock->_m_sending_window._m_size
-#define get_receive_frame(sock, index) sock->_m_receive_window._m_packet_buffer[(sock->_m_receive_window._m_head+index)%sock->_m_receive_window._m_size]
+#define get_receive_frame(sock, index) sock->_m_receive_window._m_packet_buffer[(sock->_m_receive_window._m_head+index)%DEFAULT_QUEUE_SIZE]
 #define get_receive_size(sock) sock->_m_receive_window._m_size
 
 int32_t get_send_frame_id(gbn_socket_t *socket, gbn_packet_t *packet) {
@@ -22,7 +22,6 @@ int gbn_read_thread_main ( gbn_socket_t *socket) {
 	gbn_packet_t *ack_packet;
 	uint8_t *ack_serial = malloc(SERIALIZE_SIZE);
 	data_block_t *to_rcv_queue = malloc(sizeof(data_block_t));
-
 
 	while (true) { //Main loop
 		uint8_t *buf = malloc(pack_size);
@@ -59,7 +58,7 @@ int gbn_read_thread_main ( gbn_socket_t *socket) {
 					}
 				}
 
-				while (
+				while (get_receive_frame(socket, 0)->_m_type != gbn_packet_type_uninitialized) {
 				ack_packet = malloc(sizeof(gbn_packet_t));
 				ack_packet->_m_seq_number = packet->_m_seq_number;
 				ack_packet->_m_size = 0;

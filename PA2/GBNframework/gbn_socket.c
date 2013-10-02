@@ -12,10 +12,29 @@ static void init_gbn_window( gbn_window_t* win ) {
 }
 
 static void init_gbn_socket( gbn_socket_t* sock ) {
+    /* Initialize the windows */
     init_gbn_window( & sock->_m_receive_window );   
     init_gbn_window( & sock->_m_sending_window );
+
+    /* Mutexes and conditions */
     pthread_mutex_init( & sock->_m_mutex, 0 );
     pthread_cond_init( & sock->_m_wait_for_ack, 0 );
+
+    /* Lock the mutex, this is used to avoid race
+     * conditions with the condition variable */
+    pthread_mutex_trylock( & sock->_m_mutex );
+
+    /* Kick off reading and writing
+     * threads */
+    pthread_create( & sock->_m_write_thread, NULL,
+        ( void*(*)(void*) )gbn_socket_write_thread_main, sock );
+
+    pthread_create( & sock->_m_read_thread, NULL,
+        ( void*(*)(void*) )gbn_socket_read_thread_main, sock );
+
+    /* Initialize out block queues */
+    block_queue_init( & sock->_m_receive_buffer, 128 );
+    block_queue_init( & sock->_m_sending_buffer, 128 );
 }
 
 /*
@@ -98,9 +117,24 @@ gbn_socket_t* gbn_socket_open_server( uint16_t port ) {
     return ret;
 }
 
+int gbn_destroy_window( gbn_window_t* win ) {
+    pthread_mutex_destroy( & win->_m_mutex );
+}
+
 /* Closes the socket and frees the pointer */
 int gbn_socket_close( gbn_socket_t* sock ) {
     close( sock->_m_sockfd );
+    pthread_mutex_destroy( & sock->_m_mutex );
+    pthread_cond_destroy(  & sock->_m_wait_for_ack );
+    gbn_destroy_window( & sock->_m_sending_window );
+    gbn_destroy_window( & sock->_m_receive_window );
+
+    pthread_cancel( sock->_m_read_thread );
+    pthread_cancel( sock->_m_write_thread );
+
+    block_queue_free( & sock->_m_sending_buffer );
+    block_queue_free( & sock->_m_receive_buffer );;
+
     free( sock );
 	return 0;
 }

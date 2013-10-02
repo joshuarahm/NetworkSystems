@@ -150,9 +150,6 @@ static gbn_function_t retransmit ( gbn_socket_t* sock ) {
 
 
 void gbn_socket_write_thread_main( gbn_socket_t* sock ) {
-    /* Make sure the mutex is locked when starting */
-    pthread_mutex_trylock( & sock->_m_mutex );
-
     /* the start state is asking if the
      * window is empty */
     gbn_function_t next = FCAST(window_empty_q);

@@ -2,11 +2,17 @@
 
 #include <time.h>
 
+/* this would ideally be a typedef to
+ * a fuction that returns a function that
+ * returns a function ... */
 typedef void*(*gbn_function_t)(gbn_socket_t*);
 
+/* Cast something to a gbn_function_t */
 #define FCAST(a) \
     ((gbn_function_t)(a))
 
+/* These are functions that represent
+ * nodes in a state-machine diagram */
 static gbn_function_t window_empty_q( gbn_socket_t* sock ) ;
 static gbn_function_t block_on_queue( gbn_socket_t* sock ) ;
 static gbn_function_t send_packet   ( gbn_socket_t* sock );

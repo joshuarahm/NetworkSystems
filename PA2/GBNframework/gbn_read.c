@@ -21,10 +21,10 @@ int gbn_read_thread_main ( gbn_socket_t *socket) {
 	uint32_t sockaddr_size, bytes_recvd, bytes_sent;
 	gbn_packet_t *ack_packet;
 	uint8_t *ack_serial = malloc(SERIALIZE_SIZE);
+	uint8_t *buf = malloc(pack_size);
 	data_block_t *to_rcv_queue;
 
 	while (true) { //Main loop
-		uint8_t *buf = malloc(pack_size);
 		gbn_packet_t *packet = malloc(sizeof(gbn_packet_t));
 
 		bytes_recvd = recvfrom(socket->_m_sockfd, buf, pack_size, 0, (struct sockaddr *) &(socket->_m_to_addr), &sockaddr_size);
@@ -76,11 +76,13 @@ int gbn_read_thread_main ( gbn_socket_t *socket) {
 
 				bytes_sent = sendto(socket->_m_sockfd, ack_serial, SERIALIZE_SIZE, 0, (struct sockaddr *) &(socket->_m_to_addr), sizeof(struct sockaddr_in));
 
+				free(ack_packet);
+				free(ack_serial);
+				free(buf);
 
 				break;
 			default:
 				break;
-
 		}
 	}
 }

@@ -18,6 +18,8 @@
 
 #define DEFAULT_QUEUE_SIZE 6
 
+#define DEFAULT_PACKET_SIZE 4096
+
 typedef int SOCKET;
 
 typedef int bool;

@@ -38,8 +38,7 @@ int gbn_read_thread_main ( gbn_socket_t *socket) {
 				if (framediff != -1) {
 					socket->_m_sending_window._m_head += framediff;
 					socket->_m_sending_window._m_head %= DEFAULT_QUEUE_SIZE;
-				}
-
+				} 
 				pthread_mutex_unlock(&socket->_m_sending_window._m_mutex);
 				pthread_mutex_lock(&socket->_m_mutex);
 
@@ -48,29 +47,28 @@ int gbn_read_thread_main ( gbn_socket_t *socket) {
 				pthread_mutex_unlock(&socket->_m_mutex);
 				break;
 			case (gbn_packet_type_data):
-				//if (socket->_m_receive_window._m_size == 0) {
-					//Use as initial packet
 				if (packet->_m_seq_number >= socket->_m_receive_window._m_recv_counter) {
 					if (packet->_m_seq_number < socket->_m_receive_window._m_recv_counter + DEFAULT_QUEUE_SIZE) {
 						socket->_m_receive_window._m_packet_buffer[socket->_m_receive_window._m_tail] = *packet;
 						socket->_m_receive_window._m_tail++;
-
+						socket->_m_receive_window._m_size++;
 					}
 				}
 
 				while (get_receive_frame(socket, 0)._m_type != gbn_packet_type_uninitialized) {
 					gbn_packet_t *cur = &get_receive_frame(socket, 0);
+					to_rcv_queue->_m_data = packet->_m_payload;
+					to_rcv_queue->_m_len  = packet->_m_size;
 					block_queue_push_chunk(&(socket->_m_receive_buffer), to_rcv_queue);
 					socket->_m_receive_window._m_recv_counter++;
 					socket->_m_receive_window._m_head++;
 					cur->_m_type = gbn_packet_type_uninitialized;
+					free(cur->_m_payload);
 				}
 
 				free(packet);
-				to_rcv_queue->_m_data = packet->_m_payload;
-				to_rcv_queue->_m_len  = packet->_m_size;
 				ack_packet = malloc(sizeof(gbn_packet_t));
-				ack_packet->_m_seq_number = packet->_m_seq_number;
+				ack_packet->_m_seq_number = socket->_m_receive_window._m_recv_counter;
 				ack_packet->_m_size = 0;
 				ack_packet->_m_type = gbn_packet_type_ack;
 

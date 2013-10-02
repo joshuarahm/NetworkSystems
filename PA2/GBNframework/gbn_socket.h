@@ -93,7 +93,7 @@ typedef struct {
     pthread_cond_t _m_wait_for_ack;
 
     gbn_window_t _m_sending_window;
-    gbn_window_t _m_receiving_window;
+    gbn_window_t _m_receive_window;
 
     struct sockaddr_in  _m_to_addr;
 } gbn_socket_t;
@@ -101,7 +101,7 @@ typedef struct {
 /* Opens a socket to the specified host name
  * and port number. Returns 0 on success
  * otherwise an error code is returned */
-gbn_socket_t* gbn_socket_open_client  ( const char* hostname, uint16_t port );
+gbn_socket_t* gbn_socket_open_client( const char* hostname, uint16_t port );
 
 gbn_socket_t* gbn_socket_open_server( uint16_t port );
 

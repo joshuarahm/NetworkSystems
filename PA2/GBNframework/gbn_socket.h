@@ -130,6 +130,7 @@ void gbn_socket_write_thread_main( gbn_socket_t* sock );
 
 void gbn_socket_serialize( gbn_packet_t *packet, uint8_t *buf, uint32_t buf_len);
 
-void gbn_socket_deserialize( gbn_packet_t *packet, uint8_t *buf, uint32_t buf_len);
+void gbn_socket_deserialize( gbn_packet_t *packet, uint8_t *buf, uint32_t buf_len );
+void gbn_socket_deserialize( uint8_t *buf, uint32_t buf_len, gbn_packet_t *packet );
 
 #endif /* GBN_SOCKET_H_ */

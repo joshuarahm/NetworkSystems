@@ -37,7 +37,7 @@ typedef struct {
     gbn_packet_type_e _m_type;
 
     /* Sequence number */
-    uint32_t         _m_seq_num;
+    uint32_t         _m_seq_number;
         
     /* Number of bytes in
      * the array _m_payload */
@@ -67,6 +67,9 @@ typedef struct {
     gbn_packet_t _m_packet_buffer[ DEFAULT_QUEUE_SIZE ];
 } gbn_window_t;
 
+/* Called when ACKs are received */
+void gbn_window_advance( gbn_window_t* window, int index ) ;
+
 typedef struct {
     /* The filedescriptor to the socket
      * that we are listenting on */
@@ -95,6 +98,8 @@ typedef struct {
 
     gbn_window_t _m_sending_window;
     gbn_window_t _m_receive_window;
+
+    uint32_t _m_seq_number;
 
     struct sockaddr_in  _m_to_addr;
 } gbn_socket_t;

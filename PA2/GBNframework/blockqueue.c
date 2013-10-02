@@ -3,7 +3,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <semaphore.h>
-#include "chunkqueue.h"
+#include "blockqueue.h"
 
 void queue_init(block_queue_t *queue, uint32_t qsize) {
 	if (queue->_m_data)

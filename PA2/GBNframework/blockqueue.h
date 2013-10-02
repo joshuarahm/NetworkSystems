@@ -28,7 +28,10 @@ void queue_init(block_queue_t *queue, uint32_t qsize);
 void push_chunk(block_queue_t *queue, data_block_t *data);
 
 /* Remove the top data block from the queue. */
-data_block_t* pop_chunk(block_queue_t *queue);
+data_block_t *pop_chunk(block_queue_t *queue);
+
+/* Return the first data block, but do not delete it. */
+data_block_t *peek_chunk(block_queue_t *queue);
 
 /* Frees internal queue resources */
 void queue_free(block_queue_t *queue);

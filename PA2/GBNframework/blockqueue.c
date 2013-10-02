@@ -49,7 +49,19 @@ data_block_t* pop_chunk(block_queue_t *queue) {
 	pthread_mutex_unlock(queue->_m_modify_lock);
 	return ret;
 }
-	
+
+
+data_block_t *peek_chunk(block_queue_t *queue) {
+	data_block_t *ret;
+
+	pthread_mutex_lock(queue->_m_modify_lock);
+
+	sem_post(queue->_m_write_sem);
+	ret = queue->_m_data[queue->_m_tail];
+
+	pthread_mutex_unlock(queue->_m_modify_lock);
+	return ret;
+}
 
 void queue_free(block_queue_t *queue) {
 	sem_destroy(queue->_m_read_sem);

@@ -89,7 +89,3 @@ int gbn_socket_close( gbn_socket_t* sock ) {
     close( sock->_m_sockfd );
     free( sock );
 }
-
-void gbn_socket_write_thread_main( gbn_socket_t* sock ) {
-    
-}

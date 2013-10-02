@@ -19,6 +19,7 @@
 #define DEFAULT_QUEUE_SIZE 6
 
 #define DEFAULT_PACKET_SIZE 4096
+#define SERIALIZE_OVERHEAD sizeof(uint32_t)*3
 
 typedef int SOCKET;
 
@@ -27,9 +28,9 @@ typedef int bool;
 #define true  1
 
 typedef enum {
-      gbn_packet_type_ack
-    , gbn_packet_type_data
-    , gbn_packet_type_uninitialized
+      gbn_packet_type_ack=1
+    , gbn_packet_type_data=2
+    , gbn_packet_type_uninitialized=3
 } gbn_packet_type_e;
 
 typedef struct {
@@ -126,5 +127,9 @@ int gbn_socket_close ( gbn_socket_t* socket );
 void gbn_socket_read_thread_main( gbn_socket_t* sock );
 
 void gbn_socket_write_thread_main( gbn_socket_t* sock );
+
+void gbn_socket_serialize( gbn_packet_t *packet, uint8_t *buf, uint32_t buf_len);
+
+void gbn_socket_deserialize( gbn_packet_t *packet, uint8_t *buf, uint32_t buf_len);
 
 #endif /* GBN_SOCKET_H_ */

@@ -18,7 +18,7 @@ int32_t get_send_frame_id(gbn_socket_t *socket, gbn_packet_t *packet) {
 
 int gbn_read_thread_main ( gbn_socket_t *socket) {
 	uint32_t pack_size = DEFAULT_PACKET_SIZE+sizeof(gbn_packet_t);
-	uint32_t *sockaddr_size, bytes_recvd, bytes_sent;
+	uint32_t sockaddr_size, bytes_recvd, bytes_sent;
 	gbn_packet_t *ack_packet;
 	uint8_t *ack_serial = malloc(SERIALIZE_SIZE);
 	data_block_t *to_rcv_queue = malloc(sizeof(data_block_t));
@@ -28,7 +28,7 @@ int gbn_read_thread_main ( gbn_socket_t *socket) {
 		uint8_t *buf = malloc(pack_size);
 		gbn_packet_t *packet = malloc(sizeof(gbn_packet_t));
 
-		bytes_recvd = recvfrom(socket->_m_sockfd, buf, pack_size, 0, (struct sockaddr *) &(socket->_m_to_addr), sockaddr_size);
+		bytes_recvd = recvfrom(socket->_m_sockfd, buf, pack_size, 0, (struct sockaddr *) &(socket->_m_to_addr), &sockaddr_size);
 
 		gbn_socket_deserialize(buf, bytes_recvd, packet);
 		switch (packet->_m_type) {
@@ -56,21 +56,23 @@ int gbn_read_thread_main ( gbn_socket_t *socket) {
 						socket->_m_receive_window._m_packet_buffer[socket->_m_receive_window._m_tail] = *packet;
 						socket->_m_receive_window._m_tail++;
 
-						ack_packet = malloc(sizeof(gbn_packet_t));
-						ack_packet->_m_seq_number = packet->_m_seq_number;
-						ack_packet->_m_size = 0;
-						ack_packet->_m_type = gbn_packet_type_ack;
-
-						gbn_socket_serialize(packet, ack_serial, SERIALIZE_SIZE);
-
-						bytes_sent = sendto(socket->_m_sockfd, ack_serial, pack_size, 0, (struct sockaddr *) &(socket->_m_to_addr), sizeof(struct sockaddr_in));
-
-						to_rcv_queue->_m_data = packet->_m_payload;
-						to_rcv_queue->_m_len  = packet->_m_size;
-						free(packet);
-						block_queue_push_chunk(&(socket->_m_receive_buffer), to_rcv_queue);
 					}
 				}
+
+				while (
+				ack_packet = malloc(sizeof(gbn_packet_t));
+				ack_packet->_m_seq_number = packet->_m_seq_number;
+				ack_packet->_m_size = 0;
+				ack_packet->_m_type = gbn_packet_type_ack;
+
+				gbn_socket_serialize(packet, ack_serial, SERIALIZE_SIZE);
+
+				bytes_sent = sendto(socket->_m_sockfd, ack_serial, pack_size, 0, (struct sockaddr *) &(socket->_m_to_addr), sizeof(struct sockaddr_in));
+
+				to_rcv_queue->_m_data = packet->_m_payload;
+				to_rcv_queue->_m_len  = packet->_m_size;
+				free(packet);
+				block_queue_push_chunk(&(socket->_m_receive_buffer), to_rcv_queue);
 				break;
 			default:
 				break;

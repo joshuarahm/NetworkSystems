@@ -21,20 +21,23 @@ typedef struct {
 	pthread_mutex_t* _m_modify_lock;
 } block_queue_t;
 
+#define block_queue_is_empty( queue ) \
+    ( (queue)->_m_size == 0 )
+
 /* Initialize the block queue. */
-void queue_init(block_queue_t *queue, uint32_t qsize);
+void block_queue_init(block_queue_t *queue, uint32_t qsize);
 
 /* Push a data block onto the queue. */
-void push_chunk(block_queue_t *queue, data_block_t *data);
+void block_queue_push_chunk(block_queue_t *queue, data_block_t *data);
 
 /* Remove the top data block from the queue. */
-data_block_t *pop_chunk(block_queue_t *queue);
+data_block_t *block_queue_pop_chunk(block_queue_t *queue);
 
 /* Return the first data block, but do not delete it. */
-data_block_t *peek_chunk(block_queue_t *queue);
+data_block_t *block_queue_peek_chunk(block_queue_t *queue);
 
 /* Frees internal queue resources */
-void queue_free(block_queue_t *queue);
+void block_queue_free(block_queue_t *queue);
 
 #endif
 

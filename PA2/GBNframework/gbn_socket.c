@@ -2,6 +2,7 @@
 
 #include <unistd.h>
 #include <stdlib.h>
+#include <assert.h>
 
 #include <netdb.h>
 #include <string.h>
@@ -89,3 +90,27 @@ int gbn_socket_close( gbn_socket_t* sock ) {
     close( sock->_m_sockfd );
     free( sock );
 }
+
+void gbn_socket_serialize( gbn_packet_t *packet, uint8_t *buf, uint32_t buf_len ) {
+	assert(packet->_m_size + SERIALIZE_OVERHEAD <= buf_len); //Our buf should be large enough for the payload + network header
+	uint32_t *buf_longs = (uint32_t *) buf;
+
+	buf_longs[0] = htonl( packet->_m_type );
+	buf_longs[1] = htonl( packet->_m_seq_num );
+	buf_longs[2] = htonl( packet->_m_size );
+
+	memcpy(buf+SERIALIZE_OVERHEAD, packet->_m_payload, packet->_m_size);
+}
+
+void gbn_socket_deserialize(uint8_t *buf, uint32_t buf_len, gbn_packet_t *packet ) {
+	assert(DEFAULT_PACKET_SIZE + sizeof(gbn_packet_t) >= buf_len); //Out packet should be no larger than payload + network header
+	uint32_t *buf_longs = (uint32_t *) buf;
+
+	packet->_m_type    = ntohl( buf_longs[0] );
+	packet->_m_seq_num = ntohl( buf_longs[1] );
+	packet->_m_size    = ntohl( buf_longs[2] );
+
+	packet->_m_payload = malloc(packet->_m_size);
+	memcpy(packet->_m_payload, buf+SERIALIZE_OVERHEAD, packet->_m_size);
+}
+

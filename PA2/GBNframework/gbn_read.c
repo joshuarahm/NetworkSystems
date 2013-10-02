@@ -58,8 +58,8 @@ int gbn_read_thread_main ( gbn_socket_t *socket) {
 				while (get_receive_frame(socket, 0)._m_type != gbn_packet_type_uninitialized) {
 					gbn_packet_t *cur = &get_receive_frame(socket, 0);
 					to_rcv_queue = malloc(sizeof(data_block_t));
-					to_rcv_queue->_m_data = packet->_m_payload;
-					to_rcv_queue->_m_len  = packet->_m_size;
+					to_rcv_queue->_m_data = cur->_m_payload;
+					to_rcv_queue->_m_len  = cur->_m_size;
 					block_queue_push_chunk(&(socket->_m_receive_buffer), to_rcv_queue);
 					socket->_m_receive_window._m_recv_counter++;
 					socket->_m_receive_window._m_head++;
@@ -74,7 +74,7 @@ int gbn_read_thread_main ( gbn_socket_t *socket) {
 
 				gbn_socket_serialize(packet, ack_serial, SERIALIZE_SIZE);
 
-				bytes_sent = sendto(socket->_m_sockfd, ack_serial, pack_size, 0, (struct sockaddr *) &(socket->_m_to_addr), sizeof(struct sockaddr_in));
+				bytes_sent = sendto(socket->_m_sockfd, ack_serial, SERIALIZE_SIZE, 0, (struct sockaddr *) &(socket->_m_to_addr), sizeof(struct sockaddr_in));
 
 
 				break;

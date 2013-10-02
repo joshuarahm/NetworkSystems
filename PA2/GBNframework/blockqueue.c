@@ -5,7 +5,7 @@
 #include <semaphore.h>
 #include "blockqueue.h"
 
-void queue_init(block_queue_t *queue, uint32_t qsize) {
+void block_queue_init(block_queue_t *queue, uint32_t qsize) {
 	if (queue->_m_data)
 		free(queue->_m_data);
 	queue->_m_size = qsize;
@@ -22,7 +22,7 @@ void queue_init(block_queue_t *queue, uint32_t qsize) {
 	pthread_mutex_init(queue->_m_modify_lock, NULL);
 }
 
-void push_chunk(block_queue_t *queue, data_block_t *data) {
+void block_queue_push_chunk(block_queue_t *queue, data_block_t *data) {
 	while (sem_wait(queue->_m_write_sem)); //sem_wait can be interrupted, so we loop until it returns success. (return code 0)
 
 	pthread_mutex_lock(queue->_m_modify_lock);
@@ -35,7 +35,7 @@ void push_chunk(block_queue_t *queue, data_block_t *data) {
 	pthread_mutex_unlock(queue->_m_modify_lock);
 }
 
-data_block_t* pop_chunk(block_queue_t *queue) {
+data_block_t* block_queue_pop_chunk(block_queue_t *queue) {
 	data_block_t *ret;
 	while (sem_wait(queue->_m_read_sem)); //sem_wait can be interrupted, so we loop until it returns success. (return code 0)
 
@@ -51,7 +51,7 @@ data_block_t* pop_chunk(block_queue_t *queue) {
 }
 
 
-data_block_t *peek_chunk(block_queue_t *queue) {
+data_block_t *block_queue_peek_chunk(block_queue_t *queue) {
 	data_block_t *ret;
 
 	pthread_mutex_lock(queue->_m_modify_lock);
@@ -63,7 +63,7 @@ data_block_t *peek_chunk(block_queue_t *queue) {
 	return ret;
 }
 
-void queue_free(block_queue_t *queue) {
+void block_queue_free(block_queue_t *queue) {
 	sem_destroy(queue->_m_read_sem);
 	sem_destroy(queue->_m_write_sem);
 	pthread_mutex_destroy(queue->_m_modify_lock);

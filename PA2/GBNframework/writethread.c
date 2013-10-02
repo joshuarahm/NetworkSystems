@@ -13,12 +13,12 @@ typedef void*(*gbn_function_t)(gbn_socket_t*);
 
 /* These are functions that represent
  * nodes in a state-machine diagram */
-static gbn_function_t window_empty_q( gbn_socket_t* sock ) ;
-static gbn_function_t block_on_queue( gbn_socket_t* sock ) ;
-static gbn_function_t send_packet   ( gbn_socket_t* sock );
-static gbn_function_t is_win_full_q ( gbn_socket_t* sock );
-static gbn_function_t wait_on_read  ( gbn_socket_t* sock );
-static gbn_function_t retransmit    ( gbn_socket_t* sock );
+static gbn_function_t window_empty_q ( gbn_socket_t* sock ) ;
+static gbn_function_t block_on_queue ( gbn_socket_t* sock ) ;
+static gbn_function_t send_packet    ( gbn_socket_t* sock );
+static gbn_function_t is_win_full_q  ( gbn_socket_t* sock );
+static gbn_function_t wait_on_read   ( gbn_socket_t* sock );
+static gbn_function_t retransmit     ( gbn_socket_t* sock );
 
 /* If the window is empty, transition
  * to a block on queue state, otherwise
@@ -105,12 +105,15 @@ static gbn_function_t wait_on_read  ( gbn_socket_t* sock ) {
     /* set the time to wait
      * until */
     struct timespec ts;
+    /* Current time */
     clock_gettime( CLOCK_REALTIME, & ts );
+    /* Add 50 ms */
     ts.tv_nsec += 50 * (1000000);
 
     /* Wait on the condition for the
      * reader to signal us on */
-    if( !pthread_cond_timedwait( & sock->_m_wait_for_ack, & sock->_m_mutex, & ts ) ) {
+    if( !pthread_cond_timedwait( & sock->_m_wait_for_ack,
+      & sock->_m_mutex, & ts ) ) {
         /* The wait did not time out */
 
         /* transition to asking

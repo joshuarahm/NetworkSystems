@@ -1,9 +1,9 @@
 #include <stdlib.h>
 #include "gbn_socket.h"
 
-#define get_send_frame(sock, index) sock->_m_sending_window._m_packet_buffer[(sock->_m_sending_window._m_head+index)%sock->_m_sending_window._m_size]
+#define get_send_frame(sock, index) sock->_m_sending_window._m_packet_buffer[(sock->_m_sending_window._m_head+index)%DEFAULT_QUEUE_SIZE]
 #define get_send_size(sock) sock->_m_sending_window._m_size
-#define get_receive_frame(sock, index) sock->_m_receive_window._m_packet_buffer[(sock->_m_receive_window._m_head+index)%sock->_m_receive_window._m_size]
+#define get_receive_frame(sock, index) sock->_m_receive_window._m_packet_buffer[(sock->_m_receive_window._m_head+index)%DEFAULT_QUEUE_SIZE]
 #define get_receive_size(sock) sock->_m_receive_window._m_size
 
 int32_t get_send_frame_id(gbn_socket_t *socket, gbn_packet_t *packet) {
@@ -22,7 +22,6 @@ int gbn_read_thread_main ( gbn_socket_t *socket) {
 	gbn_packet_t *ack_packet;
 	uint8_t *ack_serial = malloc(SERIALIZE_SIZE);
 	data_block_t *to_rcv_queue = malloc(sizeof(data_block_t));
-
 
 	while (true) { //Main loop
 		uint8_t *buf = malloc(pack_size);
@@ -59,7 +58,17 @@ int gbn_read_thread_main ( gbn_socket_t *socket) {
 					}
 				}
 
-				while (
+				while (get_receive_frame(socket, 0)._m_type != gbn_packet_type_uninitialized) {
+					gbn_packet_t *cur = &get_receive_frame(socket, 0);
+					block_queue_push_chunk(&(socket->_m_receive_buffer), to_rcv_queue);
+					socket->_m_receive_window._m_recv_counter++;
+					socket->_m_receive_window._m_head++;
+					cur->_m_type = gbn_packet_type_uninitialized;
+				}
+
+				free(packet);
+				to_rcv_queue->_m_data = packet->_m_payload;
+				to_rcv_queue->_m_len  = packet->_m_size;
 				ack_packet = malloc(sizeof(gbn_packet_t));
 				ack_packet->_m_seq_number = packet->_m_seq_number;
 				ack_packet->_m_size = 0;
@@ -69,10 +78,7 @@ int gbn_read_thread_main ( gbn_socket_t *socket) {
 
 				bytes_sent = sendto(socket->_m_sockfd, ack_serial, pack_size, 0, (struct sockaddr *) &(socket->_m_to_addr), sizeof(struct sockaddr_in));
 
-				to_rcv_queue->_m_data = packet->_m_payload;
-				to_rcv_queue->_m_len  = packet->_m_size;
-				free(packet);
-				block_queue_push_chunk(&(socket->_m_receive_buffer), to_rcv_queue);
+
 				break;
 			default:
 				break;

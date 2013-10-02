@@ -28,9 +28,9 @@ typedef int bool;
 #define true  1
 
 typedef enum {
-      gbn_packet_type_ack=1
-    , gbn_packet_type_data=2
-    , gbn_packet_type_uninitialized=3
+      gbn_packet_type_ack           = 0x1
+    , gbn_packet_type_data          = 0x2
+    , gbn_packet_type_uninitialized = 0x3
 } gbn_packet_type_e;
 
 typedef struct {

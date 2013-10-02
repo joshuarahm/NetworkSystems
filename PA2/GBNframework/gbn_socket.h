@@ -74,33 +74,33 @@ void gbn_window_advance( gbn_window_t* window, int index ) ;
 typedef struct {
     /* The filedescriptor to the socket
      * that we are listenting on */
-    SOCKET _m_sockfd;
+    SOCKET          _m_sockfd;
 
     /* The reader thread for this socket */
-    pthread_t _m_read_thread;
-    pthread_t _m_write_thread;
+    pthread_t       _m_read_thread;
+    pthread_t       _m_write_thread;
 
     pthread_mutex_t _m_mutex;
 
     /* Is the buffer which the higher
      * layers write to and is eventually
      * digested by the socket */
-    block_queue_t _m_sending_buffer;
-    block_queue_t _m_receive_buffer;
+    block_queue_t  _m_sending_buffer;
+    block_queue_t  _m_receive_buffer;
 
     /* The pointer into the first block that
      * tells how much a partial first block has
      * been read */
-    uint32_t      _m_current_block_ptr;
+    uint32_t       _m_current_block_ptr;
 
     /* The condition the writing thread
      * waits for */
     pthread_cond_t _m_wait_for_ack;
 
-    gbn_window_t _m_sending_window;
-    gbn_window_t _m_receive_window;
+    gbn_window_t   _m_sending_window;
+    gbn_window_t   _m_receive_window;
 
-    uint32_t _m_seq_number;
+    uint32_t       _m_seq_number;
 
     struct sockaddr_in  _m_to_addr;
 } gbn_socket_t;

@@ -7,6 +7,17 @@
 #include <netdb.h>
 #include <string.h>
 
+static void init_gbn_window( gbn_window_t* win ) {
+    pthread_mutex_init( & win->_m_mutex, 0 );
+}
+
+static void init_gbn_socket( gbn_socket_t* sock ) {
+    init_gbn_window( & sock->_m_receive_window );   
+    init_gbn_window( & sock->_m_sending_window );
+    pthread_mutex_init( & sock->_m_mutex, 0 );
+    pthread_cond_init( & sock->_m_wait_for_ack, 0 );
+}
+
 /*
  * Get the host by resolving the hostname and port number
  * and store the results in `addr`
@@ -43,6 +54,7 @@ gbn_socket_t* gbn_socket_open_client( const char* hostname, uint16_t port ) {
     if ( sock > 0 ) {
         /* Allocate the new file if we can */
         ret = calloc( sizeof( gbn_socket_t ), 1 );
+        init_gbn_socket( ret );
         ret->_m_sockfd = sock;
         gethost( hostname, port, & ret->_m_to_addr );
     }
@@ -79,6 +91,7 @@ gbn_socket_t* gbn_socket_open_server( uint16_t port ) {
 
     /* Create a new socket and return int */
     ret = calloc( sizeof( gbn_socket_t ), 1 );
+    init_gbn_socket( ret );
     ret -> _m_sockfd = sock;
 
     /* Return the socket */

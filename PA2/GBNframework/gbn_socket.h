@@ -10,6 +10,11 @@
 #include <inttypes.h>
 
 #include <pthread.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+
+#include "blockqueue.h"
 
 #define DEFAULT_QUEUE_SIZE 6
 
@@ -62,19 +67,41 @@ typedef struct {
 typedef struct {
     /* The filedescriptor to the socket
      * that we are listenting on */
-    int _m_sockfd;
+    SOCKET _m_sockfd;
 
     /* The reader thread for this socket */
     pthread_t _m_read_thread;
+    pthread_t _m_write_thread;
+
+    pthread_mutex_t _m_mutex;
+
+    /* Is the buffer which the higher
+     * layers write to and is eventually
+     * digested by the socket */
+    block_queue_t _m_sending_buffer;
+    block_queue_t _m_receive_buffer;
+
+    /* The pointer into the first block that
+     * tells how much a partial first block has
+     * been read */
+    uint32_t      _m_current_block_ptr;
+
+    /* The condition the writing thread
+     * waits for */
+    pthread_cond_t _m_wait_for_ack;
 
     gbn_window_t _m_sending_window;
     gbn_window_t _m_receiving_window;
+
+    struct sockaddr_in  _m_to_addr;
 } gbn_socket_t;
 
 /* Opens a socket to the specified host name
  * and port number. Returns 0 on success
  * otherwise an error code is returned */
-gbn_socket_t* gbn_socket_open  ( const char* hostname, uint16_t port );
+gbn_socket_t* gbn_socket_open_client  ( const char* hostname, uint16_t port );
+
+gbn_socket_t* gbn_socket_open_server( uint16_t port );
 
 /* Writes an array of bytes to the socket.
  * The write will block until all bytes are
@@ -94,6 +121,8 @@ int gbn_socket_close ( gbn_socket_t* socket );
 
 /* The main reading thread of execution for
  * the socket */
-void gbn_socket_read_thread_main( gbn_socket_t* socket );
+void gbn_socket_read_thread_main( gbn_socket_t* sock );
+
+void gbn_socket_write_thread_main( gbn_socket_t* sock );
 
 #endif /* GBN_SOCKET_H_ */

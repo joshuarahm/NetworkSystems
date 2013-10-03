@@ -86,10 +86,11 @@ int gbn_read_thread_main ( gbn_socket_t *socket) {
 					if (incoming_packet._m_seq_number < socket->_m_receive_window._m_recv_counter + DEFAULT_QUEUE_SIZE) {
 						//This data packet is valid. We should add it to the window.
 						framediff = GET_SEND_FRAME_id_delta(socket, &incoming_packet);
-						//Seq number - recv counter determines the position to put into the window
-						//I.E. 	Seq number = 0. Packet 0 comes in. 0-0 = position [0] in window.
-						//		Seq number = 0. Packet 1 comes in. 1-0 = position [1] in window.
-						//		Seq number = 5. Packet 7 comes in. 7-5 = position [2] in window
+						/* Seq number - recv counter determines the position to put into the window
+						I.E. 	Seq number = 0. Packet 0 comes in. 0-0 = position [0] in window.
+								Seq number = 0. Packet 1 comes in. 1-0 = position [1] in window.
+								Seq number = 5. Packet 7 comes in. 7-5 = position [2] in window.
+						*/
 
 						wind_index = incoming_packet._m_seq_number - socket->_m_receive_window._m_recv_counter;
 						GET_RECEIVE_FRAME(socket, wind_index) = incoming_packet;
@@ -118,7 +119,7 @@ int gbn_read_thread_main ( gbn_socket_t *socket) {
 
 					block_queue_push_chunk(&(socket->_m_receive_buffer), to_rcv_queue);
 
-					//Move the window right one packet
+					//Now we need to move the window right one entry.
 					socket->_m_receive_window._m_recv_counter++; //We have ack'd one packet
 					socket->_m_receive_window._m_head++; //Head moves right one
 					socket->_m_receive_window._m_size--; //One less frame now.

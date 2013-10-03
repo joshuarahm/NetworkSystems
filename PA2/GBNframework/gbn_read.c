@@ -82,9 +82,9 @@ int gbn_read_thread_main ( gbn_socket_t *socket) {
 
 						Send an ACK.
 				   */
+				//Make sure data packet is valid:
 				if (incoming_packet._m_seq_number >= socket->_m_receive_window._m_recv_counter) {
 					if (incoming_packet._m_seq_number < socket->_m_receive_window._m_recv_counter + DEFAULT_QUEUE_SIZE) {
-						//This data packet is valid. We should add it to the window.
 						framediff = GET_SEND_FRAME_id_delta(socket, &incoming_packet);
 						/* Seq number - recv counter determines the position to put into the window
 						I.E. 	Seq number = 0. Packet 0 comes in. 0-0 = position [0] in window.

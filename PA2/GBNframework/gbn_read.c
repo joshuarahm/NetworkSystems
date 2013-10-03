@@ -47,13 +47,13 @@ int gbn_read_thread_main ( gbn_socket_t *socket) {
 		switch (incoming_packet._m_type) {
 			case (gbn_packet_type_ack):
 				/* If this is an ack packet, we need to:
-				   		Determine how many packets to acknowledge. (framediff)
+				   		- Determine how many packets to acknowledge. (framediff)
 							I.E. If the first frame is 4, and an ack for 5 comes in,
 							we should ack both 4 AND 5.
 
-						Shift the send window right by that many packets.
+						- Shift the send window right by that many packets.
 
-						Poke the writer, in case they are waiting for free space in the window
+						- Poke the writer, in case they are waiting for free space in the window
 				 */
 				pthread_mutex_lock(&socket->_m_sending_window._m_mutex);
 
@@ -75,12 +75,12 @@ int gbn_read_thread_main ( gbn_socket_t *socket) {
 				break;
 			case (gbn_packet_type_data):
 				/* In this case we have received a data packet. We neet to:
-				   		Put the packet in the window, if it is valid
+				   		- Put the packet in the window, if it is valid
 
-						Iterate over the window from beginning until the first uninitialized packet
+						- Iterate over the window from beginning until the first uninitialized packet
 							Remove from the window, and push on the receive buffer
 
-						Send an ACK.
+						- Send an ACK.
 				   */
 				//Make sure data packet is valid:
 				if (incoming_packet._m_seq_number >= socket->_m_receive_window._m_recv_counter) {

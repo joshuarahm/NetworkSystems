@@ -177,7 +177,13 @@ int gbn_socket_read( gbn_socket_t* sock, char* bytes, uint32_t len ) {
 
 /* Closes the socket and frees the pointer */
 int gbn_socket_close( gbn_socket_t* sock ) {
+
+	data_block_t block = (data_block_t){ NULL, 0, IS_CLOSING_PACKET };
+	block_queue_push_chunk( & sock->_m_sending_buffer, & block );
+	pthread_join( sock->_m_write_thread, NULL );
     close( sock->_m_sockfd );
+	pthread_join( sock->_m_read_thread, NULL );
+
     pthread_mutex_destroy( & sock->_m_mutex );
     pthread_cond_destroy(  & sock->_m_wait_for_ack );
     gbn_destroy_window( & sock->_m_sending_window );
@@ -206,7 +212,6 @@ uint32_t gbn_socket_serialize( gbn_packet_t *packet, uint8_t *buf, uint32_t buf_
 }
 
 uint32_t gbn_socket_deserialize(uint8_t *buf, uint32_t buf_len, gbn_packet_t *packet ) {
-	printf("%lu >= %lu\n", DEFAULT_PACKET_SIZE + sizeof(gbn_packet_t), buf_len);
 	assert(DEFAULT_PACKET_SIZE + sizeof(gbn_packet_t) >= buf_len); //Out packet should be no larger than payload + network header
 	uint32_t *buf_longs = (uint32_t *) buf;
 

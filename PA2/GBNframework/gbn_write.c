@@ -7,6 +7,8 @@
 #include <mach/mach.h>
 #endif
 
+#include <stdlib.h>
+
 /* this would ideally be a typedef to
  * a fuction that returns a function that
  * returns a function ... */
@@ -54,6 +56,10 @@ gbn_function_t send_packet( gbn_socket_t* sock ) {
     gbn_window_t* tmp = & sock->_m_sending_window;
     data_block_t* block = block_queue_pop_chunk( & sock->_m_sending_buffer );
 
+	if( block->_m_flags & IS_CLOSING_PACKET ) {
+		return NULL;
+	}
+
     /* Construct a new packet */
     gbn_packet_t packet;
     packet._m_type = gbn_packet_type_data;
@@ -79,6 +85,9 @@ gbn_function_t send_packet( gbn_socket_t* sock ) {
     sendto( sock->_m_sockfd, buffer, size, 0,
         (struct sockaddr*)&sock->_m_to_addr,
             sizeof( struct sockaddr_in ) );
+
+	free( block->_m_data );
+	free( block );
 
     /* Return the state asking if the window is full */
     return FCAST(is_win_full_q);
@@ -185,7 +194,7 @@ void gbn_socket_write_thread_main( gbn_socket_t* sock ) {
      * window is empty */
     gbn_function_t next = FCAST(window_empty_q);
 
-    while ( true ) {
+    while ( next ) {
         /* Forever execute the current function
          * and the execute it's successor and execute
          * it's successor and execute it's successor

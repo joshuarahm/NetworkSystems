@@ -15,6 +15,11 @@ int main( int argc, char** argv ) {
     }
 
     sock = gbn_socket_open_server(5432) ;
+
+    if( sock == NULL ) {
+        perror( "Unable to open socket on port 5432\n" );
+        return 1;
+    }
     //FILE* read = fopen(argv[1], "w");
 
 	uint32_t tmp;

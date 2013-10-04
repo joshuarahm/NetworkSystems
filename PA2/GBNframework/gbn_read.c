@@ -6,6 +6,9 @@
 #define GET_RECEIVE_FRAME(sock, index) sock->_m_receive_window._m_packet_buffer[(sock->_m_receive_window._m_head+(index))%DEFAULT_QUEUE_SIZE]
 #define GET_RECEIVE_SIZE(sock) sock->_m_receive_window._m_size
 
+#include <stdio.h>
+#include <errno.h>
+
 /* Given a packet, check whether it is a valid packet with the current window range.
    If so, return the difference between the first frame and the given packet seq number.
    Otherwise, return -1.
@@ -22,7 +25,9 @@ int32_t GET_SEND_FRAME_id_delta(gbn_socket_t *socket, gbn_packet_t *packet) {
 
 /* Entry point for the socket reader thread. */
 void gbn_socket_read_thread_main ( gbn_socket_t *socket) {
-	uint32_t sockaddr_size, bytes_recvd, wind_index;
+	int32_t bytes_recvd, wind_index;
+	socklen_t sockaddr_size = 0;
+
 	uint32_t pack_size = DEFAULT_PACKET_SIZE+sizeof(gbn_packet_t);
 	gbn_packet_t ack_packet, incoming_packet;
 	gbn_packet_t *window_sliding_cursor;
@@ -37,8 +42,8 @@ void gbn_socket_read_thread_main ( gbn_socket_t *socket) {
 		//incoming_packet = malloc(sizeof(gbn_packet_t));
 
 		//TODO: Do we need to timeout here?
-		bytes_recvd = recvfrom(socket->_m_sockfd, incoming_buf, pack_size, 0, (struct sockaddr *) &(socket->_m_to_addr), &sockaddr_size);
-
+		if((bytes_recvd = recvfrom(socket->_m_sockfd, incoming_buf, pack_size, 0, (struct sockaddr *) &(socket->_m_to_addr), &sockaddr_size)) < 0) 
+			return ;
 
 		//Deserialize the packet we received into packet
 		gbn_socket_deserialize(incoming_buf, bytes_recvd, &incoming_packet);

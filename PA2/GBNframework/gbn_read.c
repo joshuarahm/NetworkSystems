@@ -17,11 +17,11 @@
 int32_t GET_SEND_FRAME_id_delta(gbn_socket_t *socket, gbn_packet_t *packet) {
 	gbn_packet_t *head_frame = &GET_SEND_FRAME(socket, 0);
 	if (packet->_m_seq_number >= head_frame->_m_seq_number) {
-		if (packet->_m_seq_number < head_frame->_m_size + GET_SEND_SIZE(socket)) {
+		if (packet->_m_seq_number < head_frame->_m_seq_number + DEFAULT_QUEUE_SIZE) {
 			return packet->_m_seq_number - head_frame->_m_seq_number;
 		}
 	}
-	return -1;
+	return -2;
 }
 
 /* Entry point for the socket reader thread. */
@@ -48,7 +48,7 @@ void gbn_socket_read_thread_main ( gbn_socket_t *socket) {
 		if((bytes_recvd = recvfrom(socket->_m_sockfd, incoming_buf, pack_size, 0, (struct sockaddr *) &(socket->_m_to_addr), &sockaddr_size)) < 0) 
 			return ;
 
-		debug4("Received %d bytes of data", bytes_recvd);
+		debug4("Received %d bytes of data\n", bytes_recvd);
 
 		//Deserialize the packet we received into packet
 		gbn_socket_deserialize(incoming_buf, bytes_recvd, &incoming_packet);
@@ -56,7 +56,7 @@ void gbn_socket_read_thread_main ( gbn_socket_t *socket) {
 		//We take one of two actions depending on what type of packet this is
 		switch (incoming_packet._m_type) {
 			case (gbn_packet_type_ack):
-				debug4("Received ACK packet.");
+				debug4("Received ACK packet #%d.\n", incoming_packet._m_seq_number);
 				/* If this is an ack packet, we need to:
 				   		- Determine how many packets to acknowledge. (framediff)
 							I.E. If the first frame is 4, and an ack for 5 comes in,

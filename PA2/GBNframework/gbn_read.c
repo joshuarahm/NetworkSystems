@@ -144,7 +144,7 @@ void gbn_socket_read_thread_main ( gbn_socket_t *socket) {
 
 				debug4("Preparing to send cumulative ack for #%d\n", socket->_m_receive_window._m_recv_counter);
 				//Send a cumulative ack for all packets received up to this point
-				ack_packet._m_seq_number = socket->_m_receive_window._m_recv_counter;
+				ack_packet._m_seq_number = socket->_m_receive_window._m_recv_counter-1;
 				//Ack packets are empty
 				ack_packet._m_size = 0;
 				ack_packet._m_type = gbn_packet_type_ack;

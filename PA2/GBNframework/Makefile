@@ -2,7 +2,7 @@
 CC=gcc
 CFLAGS:=-Wall -Wextra -g3 -ggdb
 OBJS:=blockqueue.o gbn_read.o gbn_socket.o gbn_write.o
-LDFLAGS:=-lpthread
+LDFLAGS:=-lpthread -lrt
 CLIENT:=client
 SERVER:=server
 DEBUGFLAGS=-DDEBUG4

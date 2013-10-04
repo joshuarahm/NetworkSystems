@@ -53,9 +53,11 @@ data_block_t* block_queue_pop_chunk(block_queue_t *queue) {
 
 data_block_t *block_queue_peek_chunk(block_queue_t *queue) {
 	data_block_t *ret;
+	while (sem_wait(queue->_m_read_sem)); //sem_wait can be interrupted, so we loop until it returns success. (return code 0)
 
 	pthread_mutex_lock(queue->_m_modify_lock);
 
+	sem_post(queue->_m_read_sem);
 	ret = queue->_m_data[queue->_m_tail];
 
 	pthread_mutex_unlock(queue->_m_modify_lock);

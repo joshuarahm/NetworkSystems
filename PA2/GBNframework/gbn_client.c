@@ -15,6 +15,7 @@ int main( int argc, char** argv ) {
         return 1;
     }
 
+	// 192.168.0.170
     sock = gbn_socket_open_client( "localhost", 5432 ) ;
 
     FILE* read = fopen( argv[1], "r" );

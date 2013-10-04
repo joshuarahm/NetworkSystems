@@ -107,9 +107,12 @@ gbn_function_t send_packet( gbn_socket_t* sock ) {
  * the acks */
 static gbn_function_t is_win_full_q ( gbn_socket_t* sock ) {
 	debug3("[Writer] Transitioning into state: is_win_full_q\n")
-	debug4("Sending window size: %d, queue size: %d\n", sock->_m_sending_window._m_size, sock->_m_sending_buffer._m_size);
-    if( !(sock->_m_sending_window._m_size < DEFAULT_QUEUE_SIZE || 
-      block_queue_is_empty( & sock->_m_sending_buffer ) ) ) {
+	debug4("[Writer] Sending Window Size: %d, Block Queue Empty? %d\n",
+	  sock->_m_sending_window._m_size,
+	  block_queue_is_empty( & sock->_m_sending_buffer ) );
+
+    if( sock->_m_sending_window._m_size < DEFAULT_QUEUE_SIZE && 
+      !block_queue_is_empty( & sock->_m_sending_buffer ) ) {
         /* Send yet another packet */
         return FCAST(send_packet);
     }
@@ -148,7 +151,7 @@ static gbn_function_t wait_on_read  ( gbn_socket_t* sock ) {
     /* set the time to wait
      * until */
     struct timespec ts;
-	millis_in_future( &ts, 500 );
+	millis_in_future( &ts, 50 );
     /* Current time */
     //clock_gettime( CLOCK_REALTIME, & ts );
 

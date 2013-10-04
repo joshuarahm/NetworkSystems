@@ -4,6 +4,8 @@
 #define DEFAULT_BUF_SIZE 4096
 
 int main( int argc, char** argv ) {
+    (void) argc;
+
     gbn_socket_t* sock;
 	uint8_t buf[DEFAULT_BUF_SIZE];
 
@@ -16,11 +18,12 @@ int main( int argc, char** argv ) {
     //FILE* read = fopen(argv[1], "w");
 
 	uint32_t tmp;
+    uint32_t bytes_read;
 
     while(true) {
-        gbn_socket_read(sock, buf, DEFAULT_BUF_SIZE);
-		for (tmp=0; tmp<DEFAULT_BUF_SIZE; tmp++) {
-			printf("%x", buf[tmp]);
+        bytes_read = gbn_socket_read(sock, (char*)buf, DEFAULT_BUF_SIZE);
+		for (tmp=0; tmp < bytes_read; tmp++) {
+			printf("%02x ", buf[tmp]);
 		}
 		printf("\n");
     }

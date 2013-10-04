@@ -4,9 +4,11 @@ CFLAGS:=-Wall -Wextra -g3 -ggdb
 OBJS:=blockqueue.o gbn_read.o gbn_socket.o gbn_write.o
 LDFLAGS:=-lpthread
 CLIENT:=client
+SERVER:=server
 
-all: $(OBJS) gbn_client.o
+all: $(OBJS) gbn_client.o gbn_server.o
 	$(CC) $(CFLAGS) -o $(CLIENT) $(OBJS) gbn_client.o $(LDFLAGS)
+	$(CC) $(CFLAGS) -o $(SERVER) $(OBJS) gbn_server.o $(LDFLAGS)
 
 blockqueue.o: blockqueue.c
 	$(CC) $(CFLAGS) -o $@ -c $<

@@ -147,8 +147,7 @@ int gbn_socket_read( gbn_socket_t* sock, char* bytes, uint32_t len ) {
             block = block_queue_peek_chunk( & sock->_m_receive_buffer );
     
             if( block->_m_len <= len - bytes_read ) {
-                /* The block length will not finish
-                * the read */
+                /* The read will consume the block */
     
                 /* Read the full block of data */
                 memcpy( bytes + bytes_read, block->_m_data, block->_m_len );

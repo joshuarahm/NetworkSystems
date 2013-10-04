@@ -20,18 +20,22 @@ int main( int argc, char** argv ) {
         perror( "Unable to open socket on port 5432\n" );
         return 1;
     }
-    //FILE* read = fopen(argv[1], "w");
+    FILE* read = fopen(argv[1], "w");
 
 	uint32_t tmp;
-    uint32_t bytes_read;
+    uint32_t bytes_read=1;
 
-    while(true) {
-        bytes_read = gbn_socket_read(sock, (char*)buf, DEFAULT_BUF_SIZE);
+    while ( (bytes_read = gbn_socket_read(sock, (char*)buf, DEFAULT_BUF_SIZE))) {
+		printf("Read %d bytes.\n", bytes_read);
+        
+		fwrite(buf, 1, bytes_read, read);
 		//for (tmp=0; tmp < bytes_read; tmp++) {
 		//	printf("%02x ", buf[tmp]);
 		//}
 		//printf("\n");
     }
+
+	fclose(read);
     
     gbn_socket_close(sock);
     return 0;

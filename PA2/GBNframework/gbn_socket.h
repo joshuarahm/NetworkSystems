@@ -32,7 +32,13 @@ typedef enum {
       gbn_packet_type_uninitialized = 0x0
     , gbn_packet_type_ack           = 0x1
     , gbn_packet_type_data          = 0x2
+    , gbn_packet_type_EOF			= 0x3
 } gbn_packet_type_e;
+
+typedef enum {
+      socket_status_open					= 0x0
+    , socket_status_closed					= 0x1
+} socket_status_type_e;
 
 typedef struct {
     gbn_packet_type_e _m_type;
@@ -81,6 +87,8 @@ typedef struct {
     pthread_t       _m_write_thread;
 
     pthread_mutex_t _m_mutex;
+
+	socket_status_type_e _m_status;
 
     /* Is the buffer which the higher
      * layers write to and is eventually

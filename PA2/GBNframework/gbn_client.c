@@ -4,6 +4,8 @@
 #define READ_SIZE (4096<<1)
 
 int main( int argc, char** argv ) {
+    (void) argc;
+
     gbn_socket_t* sock;
 
     if( ! argv[1] ) {

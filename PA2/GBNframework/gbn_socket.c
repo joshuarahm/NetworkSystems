@@ -119,6 +119,7 @@ gbn_socket_t* gbn_socket_open_server( uint16_t port ) {
 
 int gbn_destroy_window( gbn_window_t* win ) {
     pthread_mutex_destroy( & win->_m_mutex );
+    return 0;
 }
 
 #define min( a, b ) \
@@ -222,7 +223,7 @@ int32_t gbn_socket_write ( gbn_socket_t* socket, const char* bytes, uint32_t len
 	uint32_t whole_blocks = (len/DEFAULT_PACKET_SIZE), cntr = 0, final_len = 0;
 	data_block_t *my_block;
 	uint8_t *out_buffer;
-	const uint8_t *cursor = (const uint8_t*) bytes;
+    const uint8_t* cursor = (const uint8_t*)bytes;
 
 	//Copy as many whole blocks as we can. This loop should only generate blocks of
 	//DEFAULT_PACKET_SIZE in length.
@@ -230,9 +231,9 @@ int32_t gbn_socket_write ( gbn_socket_t* socket, const char* bytes, uint32_t len
 		out_buffer = malloc(DEFAULT_PACKET_SIZE);
 		my_block = malloc(sizeof(data_block_t));
 		my_block->_m_len = DEFAULT_PACKET_SIZE;
-		memcpy(out_buffer, bytes, DEFAULT_PACKET_SIZE);
+		memcpy(out_buffer, cursor, DEFAULT_PACKET_SIZE);
 		block_queue_push_chunk(&socket->_m_sending_buffer, my_block);
-		out_buffer += DEFAULT_PACKET_SIZE;
+		cursor += DEFAULT_PACKET_SIZE;
 	}
 
 	//If the input was not a proper multiple, there will be leftover bytes.
@@ -242,7 +243,7 @@ int32_t gbn_socket_write ( gbn_socket_t* socket, const char* bytes, uint32_t len
 		out_buffer = malloc(final_len);
 		my_block = malloc(sizeof(data_block_t));
 		my_block->_m_len = final_len;
-		memcpy(out_buffer, bytes, final_len);
+		memcpy(out_buffer, cursor, final_len);
 		block_queue_push_chunk(&socket->_m_sending_buffer, my_block);
 	}
 

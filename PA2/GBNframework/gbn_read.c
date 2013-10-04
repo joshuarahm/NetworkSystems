@@ -135,7 +135,7 @@ void gbn_socket_read_thread_main ( gbn_socket_t *socket) {
 				ack_packet._m_size = 0;
 				ack_packet._m_type = gbn_packet_type_ack;
 
-				gbn_socket_serialize(&incoming_packet, ack_serial, SERIALIZE_SIZE);
+				gbn_socket_serialize(&ack_packet, ack_serial, SERIALIZE_SIZE);
 				sendto(socket->_m_sockfd, ack_serial, SERIALIZE_SIZE, 0, (struct sockaddr *) &(socket->_m_to_addr), sizeof(struct sockaddr_in));
 
 				break;

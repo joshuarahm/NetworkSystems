@@ -10,16 +10,17 @@
 void block_queue_init(block_queue_t *queue, uint32_t qsize) {
 	if (queue->_m_data)
 		free(queue->_m_data);
-	queue->_m_size = qsize;
+	queue->_m_capacity = qsize;
 	queue->_m_head = 0;
 	queue->_m_tail = 0;
+	queue->_m_size = 0;
 
 	queue->_m_data = malloc(sizeof(data_block_t)*qsize);
 	queue->_m_write_sem = malloc(sizeof(sem_t));
 	queue->_m_read_sem = malloc(sizeof(sem_t));
 	queue->_m_modify_lock = malloc(sizeof(pthread_mutex_t));
 	
-	sem_init(queue->_m_write_sem, 0, queue->_m_size);
+	sem_init(queue->_m_write_sem, 0, queue->_m_capacity);
 	sem_init(queue->_m_read_sem, 0, 0);
 	pthread_mutex_init(queue->_m_modify_lock, NULL);
 }
@@ -33,7 +34,8 @@ void block_queue_push_chunk(block_queue_t *queue, data_block_t *data) {
 	sem_post(queue->_m_read_sem);
 	queue->_m_data[queue->_m_head] = data;
 	queue->_m_head++;
-	queue->_m_head %= queue->_m_size;
+	queue->_m_head %= queue->_m_capacity;
+	queue->_m_size++;
 
 	pthread_mutex_unlock(queue->_m_modify_lock);
 }
@@ -47,7 +49,8 @@ data_block_t* block_queue_pop_chunk(block_queue_t *queue) {
 	sem_post(queue->_m_write_sem);
 	ret = queue->_m_data[queue->_m_tail];
 	queue->_m_tail++;
-	queue->_m_tail %= queue->_m_size;
+	queue->_m_tail %= queue->_m_capacity;
+	queue->_m_size--;
 
 	pthread_mutex_unlock(queue->_m_modify_lock);
     debug2( "[Queue] data block poped from queue: %p\n", ret );

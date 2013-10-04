@@ -19,6 +19,7 @@ typedef struct {
 	uint32_t _m_head;
 	uint32_t  _m_tail;
 	uint32_t _m_size;
+	uint32_t _m_capacity;
 	sem_t *_m_write_sem, *_m_read_sem;
 	pthread_mutex_t* _m_modify_lock;
 } block_queue_t;

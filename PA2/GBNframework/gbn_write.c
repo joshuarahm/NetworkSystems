@@ -8,6 +8,7 @@
 #endif
 
 #include <stdlib.h>
+#include "debugprint.h"
 
 /* this would ideally be a typedef to
  * a fuction that returns a function that
@@ -31,6 +32,7 @@ static gbn_function_t retransmit     ( gbn_socket_t* sock );
  * to a block on queue state, otherwise
  * transition to the is_win_full state */
 gbn_function_t window_empty_q( gbn_socket_t* sock ) {
+	debug3("[Writer] Transitioning into state: window_empty_q\n")
     if( sock->_m_sending_window._m_size == 0 ) {
         /* the window is empty */
         return FCAST(block_on_queue);
@@ -42,6 +44,7 @@ gbn_function_t window_empty_q( gbn_socket_t* sock ) {
 /* blocks while there is no data on
  * the queue */
 gbn_function_t block_on_queue( gbn_socket_t* sock ) {
+	debug3("[Writer] Transitioning into state: block_on_queue\n")
     /* Block unitl there is some data */
     block_queue_peek_chunk( & sock->_m_sending_buffer );
 
@@ -53,10 +56,12 @@ gbn_function_t block_on_queue( gbn_socket_t* sock ) {
 /* Sends a packet across the wire and updates
  * the window appropriately */
 gbn_function_t send_packet( gbn_socket_t* sock ) {
+	debug3("[Writer] Transitioning into state: send_packet\n")
     gbn_window_t* tmp = & sock->_m_sending_window;
     data_block_t* block = block_queue_pop_chunk( & sock->_m_sending_buffer );
 
 	if( block->_m_flags & IS_CLOSING ) {
+		debug2( "[Writer] Writer received EOF\n" );
 		return NULL;
 	}
 
@@ -99,6 +104,7 @@ gbn_function_t send_packet( gbn_socket_t* sock ) {
  * it transitions to waiting for
  * the acks */
 static gbn_function_t is_win_full_q ( gbn_socket_t* sock ) {
+	debug3("[Writer] Transitioning into state: is_win_full_q\n")
     if( !(sock->_m_sending_window._m_size < DEFAULT_QUEUE_SIZE || 
       block_queue_is_empty( & sock->_m_sending_buffer ) ) ) {
         /* Send yet another packet */
@@ -116,6 +122,7 @@ static gbn_function_t is_win_full_q ( gbn_socket_t* sock ) {
  * otherwise, this function returns to the start
  * state */
 static gbn_function_t wait_on_read  ( gbn_socket_t* sock ) {
+	debug3("[Writer] Transitioning into state: wait_on_read\n")
     /* set the time to wait
      * until */
     struct timespec ts;
@@ -147,7 +154,7 @@ static gbn_function_t wait_on_read  ( gbn_socket_t* sock ) {
         return FCAST(window_empty_q);
     };
 
-    /* Transition to retransmit */
+    /* [Writer] Transition to retransmit */
     return FCAST(retransmit);
 }
 
@@ -156,6 +163,7 @@ static gbn_function_t wait_on_read  ( gbn_socket_t* sock ) {
  * time. Sends all packets in the window
  * again */
 static gbn_function_t retransmit ( gbn_socket_t* sock ) {
+	debug3("[Writer] Transitioning into state: retransmit\n")
     uint32_t size;
     uint8_t buffer[ SERIALIZE_SIZE ];
     gbn_window_t* tmp = &sock->_m_sending_window;

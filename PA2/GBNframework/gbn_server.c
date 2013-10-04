@@ -22,7 +22,6 @@ int main( int argc, char** argv ) {
     }
     FILE* read = fopen(argv[1], "w");
 
-	uint32_t tmp;
     uint32_t bytes_read=1;
 
     while ( (bytes_read = gbn_socket_read(sock, (char*)buf, DEFAULT_BUF_SIZE))) {

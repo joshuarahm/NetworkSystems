@@ -15,6 +15,7 @@
 #include <netinet/in.h>
 
 #include "blockqueue.h"
+#include "sendto.h"
 
 #define DEFAULT_QUEUE_SIZE 6
 

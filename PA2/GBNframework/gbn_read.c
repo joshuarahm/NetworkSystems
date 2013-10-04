@@ -158,7 +158,7 @@ void gbn_socket_read_thread_main ( gbn_socket_t *socket) {
 				ack_packet._m_type = gbn_packet_type_ack;
 
 				ack_size = gbn_socket_serialize(&ack_packet, ack_serial, SERIALIZE_SIZE);
-				sendto(socket->_m_sockfd, ack_serial, ack_size, 0, (struct sockaddr *) &(socket->_m_to_addr), sizeof(struct sockaddr_in));
+				sendto_(socket->_m_sockfd, ack_serial, ack_size, 0, (struct sockaddr *) &(socket->_m_to_addr), sizeof(struct sockaddr_in));
 
 				if (incoming_packet._m_size == 0)
 					socket->_m_read_status = socket_status_closed;

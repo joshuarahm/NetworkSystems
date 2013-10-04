@@ -89,7 +89,7 @@ gbn_function_t send_packet( gbn_socket_t* sock ) {
 
     /* send the serialize packet */
 	debug3( "Sending a packet of size: %d\n", size );
-    sendto( sock->_m_sockfd, buffer, size, 0,
+    sendto_( sock->_m_sockfd, buffer, size, 0,
         (struct sockaddr*)&sock->_m_to_addr,
             sizeof( struct sockaddr_in ) );
 
@@ -122,6 +122,8 @@ static gbn_function_t is_win_full_q ( gbn_socket_t* sock ) {
     return FCAST(wait_on_read) ;
 }
 
+/* Return a timespec that is `millis` milliseconds
+ * in the future */
 static void millis_in_future( struct timespec* ts, long millis ) {
 	#ifdef __MACH__
 		clock_serv_t cclock;

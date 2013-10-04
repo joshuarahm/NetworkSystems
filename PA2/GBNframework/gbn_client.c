@@ -1,4 +1,6 @@
 #include <stdio.h>
+#include <errno.h>
+
 #include "gbn_socket.h"
 
 #define READ_SIZE (4096<<1)
@@ -16,6 +18,12 @@ int main( int argc, char** argv ) {
     sock = gbn_socket_open_client( "localhost", 5432 ) ;
 
     FILE* read = fopen( argv[1], "r" );
+
+    if( ! read ) {
+        perror( "Could not open file" );
+        return errno;
+    }
+
     char buffer[READ_SIZE];
     size_t bytes_read;
 

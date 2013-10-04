@@ -89,6 +89,7 @@ typedef struct {
     pthread_mutex_t _m_mutex;
 
 	socket_status_type_e _m_status;
+	socket_status_type_e _m_read_status;
 
     /* Is the buffer which the higher
      * layers write to and is eventually

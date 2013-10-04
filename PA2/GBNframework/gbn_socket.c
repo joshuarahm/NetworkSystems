@@ -23,6 +23,7 @@ static void init_gbn_socket( gbn_socket_t* sock ) {
 
 	/* Set the socket status: */
 	sock->_m_status = socket_status_open;
+	sock->_m_read_status = socket_status_open;
 
     /* Lock the mutex, this is used to avoid race
      * conditions with the condition variable */
@@ -134,7 +135,7 @@ int gbn_socket_read( gbn_socket_t* sock, char* bytes, uint32_t len ) {
     size_t bytes_read = 0;
 
 	/* If the socket is closed, we will do no more reading */
-	if (sock->_m_status != socket_status_open) 
+	if (sock->_m_status == socket_status_closed) 
 		return 0;
 
     /* Handle the original case where
@@ -152,12 +153,14 @@ int gbn_socket_read( gbn_socket_t* sock, char* bytes, uint32_t len ) {
         sock->_m_current_block_ptr = 0;
     
         while( bytes_read < len ) {
-            block = block_queue_peek_chunk( & sock->_m_receive_buffer );
+			debug4("block len: %d\n", block->_m_len);
 			if ( block->_m_len == 0 ) {
 				debug4("Found EOF block. Closing socket...\n");
 				sock->_m_status = socket_status_closed;
 				return bytes_read;
 			}
+
+            block = block_queue_peek_chunk( & sock->_m_receive_buffer );
     
             if( block->_m_len <= len - bytes_read ) {
                 /* The read will consume the block */
@@ -199,7 +202,10 @@ int gbn_socket_close( gbn_socket_t* sock ) {
 		*block = (data_block_t){ NULL, 0, IS_CLOSING};
 		block_queue_push_chunk( & sock->_m_sending_buffer, block );
 		pthread_join( sock->_m_write_thread, NULL );
+	} else {
+		pthread_join( sock->_m_read_thread, NULL );
 	}
+
     close( sock->_m_sockfd );
 	// pthread_join( sock->_m_read_thread, NULL );
 

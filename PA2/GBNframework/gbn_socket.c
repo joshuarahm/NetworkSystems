@@ -24,6 +24,10 @@ static void init_gbn_socket( gbn_socket_t* sock ) {
      * conditions with the condition variable */
     pthread_mutex_trylock( & sock->_m_mutex );
 
+    /* Initialize out block queues */
+    block_queue_init( & sock->_m_receive_buffer, 128 );
+    block_queue_init( & sock->_m_sending_buffer, 128 );
+
     /* Kick off reading and writing
      * threads */
     pthread_create( & sock->_m_write_thread, NULL,
@@ -31,10 +35,6 @@ static void init_gbn_socket( gbn_socket_t* sock ) {
 
     pthread_create( & sock->_m_read_thread, NULL,
         ( void*(*)(void*) )gbn_socket_read_thread_main, sock );
-
-    /* Initialize out block queues */
-    block_queue_init( & sock->_m_receive_buffer, 128 );
-    block_queue_init( & sock->_m_sending_buffer, 128 );
 }
 
 /*

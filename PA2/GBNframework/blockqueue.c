@@ -56,7 +56,6 @@ data_block_t *block_queue_peek_chunk(block_queue_t *queue) {
 
 	pthread_mutex_lock(queue->_m_modify_lock);
 
-	sem_post(queue->_m_write_sem);
 	ret = queue->_m_data[queue->_m_tail];
 
 	pthread_mutex_unlock(queue->_m_modify_lock);

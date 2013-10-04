@@ -27,4 +27,4 @@ gbn_write.o: gbn_write.c
 	$(CC) $(CFLAGS) $(DEBUGFLAGS) -o $@ -c $<
 
 clean:
-	rm *.o client
+	rm *.o client server

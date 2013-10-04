@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include "gbn_socket.h"
+#include "debugprint.h"
 
 #define GET_SEND_FRAME(sock, index) sock->_m_sending_window._m_packet_buffer[(sock->_m_sending_window._m_head+(index))%DEFAULT_QUEUE_SIZE]
 #define GET_SEND_SIZE(sock) sock->_m_sending_window._m_size
@@ -42,8 +43,11 @@ void gbn_socket_read_thread_main ( gbn_socket_t *socket) {
 		//incoming_packet = malloc(sizeof(gbn_packet_t));
 
 		//TODO: Do we need to timeout here?
+		debug4("Attempting to read from socket...\n");
 		if((bytes_recvd = recvfrom(socket->_m_sockfd, incoming_buf, pack_size, 0, (struct sockaddr *) &(socket->_m_to_addr), &sockaddr_size)) < 0) 
 			return ;
+
+		debug4("Received %d bytes of data", bytes_recvd);
 
 		//Deserialize the packet we received into packet
 		gbn_socket_deserialize(incoming_buf, bytes_recvd, &incoming_packet);

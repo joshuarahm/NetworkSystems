@@ -6,6 +6,7 @@
 
 #include <netdb.h>
 #include <string.h>
+#include "debugprint.h"
 
 static void init_gbn_window( gbn_window_t* win ) {
     pthread_mutex_init( & win->_m_mutex, 0 );
@@ -229,6 +230,8 @@ int32_t gbn_socket_write ( gbn_socket_t* socket, const char* bytes, uint32_t len
 	uint8_t *out_buffer;
     const uint8_t* cursor = (const uint8_t*)bytes;
 
+	debug3("Client attempting to write %d bytes, in %d or %d blocks.\n", len, whole_blocks, whole_blocks+1);
+
 	//Copy as many whole blocks as we can. This loop should only generate blocks of
 	//DEFAULT_PACKET_SIZE in length.
 	for (cntr = 0; cntr < whole_blocks; cntr++) {
@@ -246,6 +249,7 @@ int32_t gbn_socket_write ( gbn_socket_t* socket, const char* bytes, uint32_t len
 	//We are guaranteed the number of bytes B is 0 <= B < DEFAULT_PACKET_SIZE
 	if (whole_blocks*DEFAULT_PACKET_SIZE < len) {
 		final_len = len - (whole_blocks*DEFAULT_PACKET_SIZE);
+		debug3("Client writing leftover block of size %d.\n", final_len);
 		out_buffer = malloc(final_len);
 		my_block = malloc(sizeof(data_block_t));
 

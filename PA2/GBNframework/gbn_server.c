@@ -27,10 +27,10 @@ int main( int argc, char** argv ) {
 
     while(true) {
         bytes_read = gbn_socket_read(sock, (char*)buf, DEFAULT_BUF_SIZE);
-		for (tmp=0; tmp < bytes_read; tmp++) {
-			printf("%02x ", buf[tmp]);
-		}
-		printf("\n");
+		//for (tmp=0; tmp < bytes_read; tmp++) {
+		//	printf("%02x ", buf[tmp]);
+		//}
+		//printf("\n");
     }
     
     gbn_socket_close(sock);

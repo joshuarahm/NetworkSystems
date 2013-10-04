@@ -121,6 +121,60 @@ int gbn_destroy_window( gbn_window_t* win ) {
     pthread_mutex_destroy( & win->_m_mutex );
 }
 
+#define min( a, b ) \
+    ( (a)>(b) ? (b) : (a) )
+
+int gbn_socket_read( gbn_socket_t* sock, char* bytes, uint32_t len ) {
+    data_block_t* block;
+    size_t bytes_read = 0;
+
+    /* Handle the original case where
+     * the first block may be partially
+     * read already */
+    block = block_queue_peek_chunk( & sock->_m_receive_buffer );
+    bytes_read = min( len, block->_m_len - sock->_m_current_block_ptr );
+    memcpy( bytes, block->_m_data, bytes_read );
+
+    if( bytes_read != len ) {
+        /* Exhaused the current chunk */
+        free( block->_m_data );
+        free( block );
+        block_queue_pop_chunk( & sock->_m_receive_buffer );
+        sock->_m_current_block_ptr = 0;
+    
+        while( bytes_read < len ) {
+            block = block_queue_peek_chunk( & sock->_m_receive_buffer );
+    
+            if( block->_m_len <= len - bytes_read ) {
+                /* The block length will not finish
+                * the read */
+    
+                /* Read the full block of data */
+                memcpy( bytes + bytes_read, block->_m_data, block->_m_len );
+                bytes_read += block->_m_len;
+    
+                /* Free the block, we don't need it any
+                * more */
+                free( block->_m_data );
+                free( block );
+    
+                /* Pop the chunk off the queue */
+                block_queue_pop_chunk( & sock->_m_receive_buffer );
+            } else {
+                /* The block will be partially read */
+                memcpy( bytes + bytes_read, block->_m_data, len - bytes_read );
+                sock->_m_current_block_ptr = len - bytes_read;
+                bytes_read = len;
+            }
+        }
+    } else {
+        /* The first chunk was still not exhausted */
+        sock->_m_current_block_ptr += bytes_read;
+    }
+
+    return bytes_read;
+}
+
 /* Closes the socket and frees the pointer */
 int gbn_socket_close( gbn_socket_t* sock ) {
     close( sock->_m_sockfd );

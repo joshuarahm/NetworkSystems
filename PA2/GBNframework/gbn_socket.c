@@ -73,9 +73,9 @@ gbn_socket_t* gbn_socket_open_client( const char* hostname, uint16_t port ) {
     if ( sock > 0 ) {
         /* Allocate the new file if we can */
         ret = calloc( sizeof( gbn_socket_t ), 1 );
-        init_gbn_socket( ret );
         ret->_m_sockfd = sock;
         gethost( hostname, port, & ret->_m_to_addr );
+        init_gbn_socket( ret );
     }
 
     /* Return the file descriptor */
@@ -206,6 +206,7 @@ uint32_t gbn_socket_serialize( gbn_packet_t *packet, uint8_t *buf, uint32_t buf_
 }
 
 uint32_t gbn_socket_deserialize(uint8_t *buf, uint32_t buf_len, gbn_packet_t *packet ) {
+	printf("%lu >= %lu\n", DEFAULT_PACKET_SIZE + sizeof(gbn_packet_t), buf_len);
 	assert(DEFAULT_PACKET_SIZE + sizeof(gbn_packet_t) >= buf_len); //Out packet should be no larger than payload + network header
 	uint32_t *buf_longs = (uint32_t *) buf;
 

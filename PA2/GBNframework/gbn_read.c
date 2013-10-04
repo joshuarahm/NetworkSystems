@@ -34,6 +34,7 @@ void gbn_socket_read_thread_main ( gbn_socket_t *socket) {
 	gbn_packet_t *window_sliding_cursor;
 	uint8_t ack_serial[SERIALIZE_SIZE], incoming_buf[pack_size];
 	int32_t framediff;
+	uint32_t ack_size;
 
 	data_block_t *to_rcv_queue;
 
@@ -142,15 +143,15 @@ void gbn_socket_read_thread_main ( gbn_socket_t *socket) {
 				}
 
 
-				debug4("Preparing to send cumulative ack for #%d\n", socket->_m_receive_window._m_recv_counter);
+				debug4("Preparing to send cumulative ack for #%d\n", socket->_m_receive_window._m_recv_counter-1);
 				//Send a cumulative ack for all packets received up to this point
 				ack_packet._m_seq_number = socket->_m_receive_window._m_recv_counter-1;
 				//Ack packets are empty
 				ack_packet._m_size = 0;
 				ack_packet._m_type = gbn_packet_type_ack;
 
-				gbn_socket_serialize(&ack_packet, ack_serial, SERIALIZE_SIZE);
-				sendto(socket->_m_sockfd, ack_serial, SERIALIZE_SIZE, 0, (struct sockaddr *) &(socket->_m_to_addr), sizeof(struct sockaddr_in));
+				ack_size = gbn_socket_serialize(&ack_packet, ack_serial, SERIALIZE_SIZE);
+				sendto(socket->_m_sockfd, ack_serial, ack_size, 0, (struct sockaddr *) &(socket->_m_to_addr), sizeof(struct sockaddr_in));
 
 				break;
 			default:

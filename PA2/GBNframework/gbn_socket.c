@@ -177,8 +177,7 @@ int gbn_socket_read( gbn_socket_t* sock, char* bytes, uint32_t len ) {
 
 /* Closes the socket and frees the pointer */
 int gbn_socket_close( gbn_socket_t* sock ) {
-
-	data_block_t block = (data_block_t){ NULL, 0, IS_CLOSING_PACKET };
+	data_block_t block = (data_block_t){ NULL, 0, IS_CLOSING };
 	block_queue_push_chunk( & sock->_m_sending_buffer, & block );
 	pthread_join( sock->_m_write_thread, NULL );
     close( sock->_m_sockfd );

@@ -68,14 +68,16 @@ void gbn_socket_read_thread_main ( gbn_socket_t *socket) {
 				 */
 				pthread_mutex_lock(&socket->_m_sending_window._m_mutex);
 
-				framediff = GET_SEND_FRAME_id_delta(socket, &incoming_packet);
+				framediff = GET_SEND_FRAME_id_delta(socket, &incoming_packet)+1;
 				if (framediff != -1) {
 					//Our ack is valid and corresponds to some number of packets in our window
 					socket->_m_sending_window._m_head += framediff;
 					socket->_m_sending_window._m_head %= DEFAULT_QUEUE_SIZE;
+					socket->_m_sending_window._m_size -= framediff;
 					
 				} 
 				pthread_mutex_unlock(&socket->_m_sending_window._m_mutex);
+				debug4("Curr sending window size: %d\n", socket->_m_sending_window._m_size);
 
 				if (framediff != -1) {
 					//Poke the writer
@@ -95,8 +97,10 @@ void gbn_socket_read_thread_main ( gbn_socket_t *socket) {
 						- Send an ACK.
 				   */
 				//Make sure data packet is valid:
+				debug4("Received packet id: %d\n", incoming_packet._m_seq_number);
 				if (incoming_packet._m_seq_number >= socket->_m_receive_window._m_recv_counter) {
 					if (incoming_packet._m_seq_number < socket->_m_receive_window._m_recv_counter + DEFAULT_QUEUE_SIZE) {
+						debug4("Accepted frame %d\n", incoming_packet._m_seq_number);
 						framediff = GET_SEND_FRAME_id_delta(socket, &incoming_packet);
 						/* Seq number - recv counter determines the position to put into the window
 						I.E. 	Seq number = 0. Packet 0 comes in. 0-0 = position [0] in window.
@@ -109,8 +113,9 @@ void gbn_socket_read_thread_main ( gbn_socket_t *socket) {
 
 						//If the packet is outside the current window but still valid, we need to extend the window out to it.
 						//I.E. window contains [X,1] and 3 comes in, it needs to be expanded to [0,1,X,3] This increases size by 2.
-						framediff = incoming_packet._m_seq_number - GET_RECEIVE_FRAME(socket, socket->_m_receive_window._m_tail)._m_seq_number;
+						framediff = incoming_packet._m_seq_number - GET_RECEIVE_FRAME(socket, socket->_m_receive_window._m_size)._m_seq_number+1;
 						if (framediff > 0) {
+							debug4("Shifting frame by %d.\n", framediff);
 							//The received frame is outside our window by 'framediff' number of frames. Expand to compensate.
 							socket->_m_receive_window._m_tail += framediff;
 							socket->_m_receive_window._m_tail %= DEFAULT_QUEUE_SIZE;

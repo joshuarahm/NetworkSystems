@@ -78,6 +78,7 @@ gbn_function_t send_packet( gbn_socket_t* sock ) {
     /* Update the sending window */
     tmp->_m_packet_buffer[tmp->_m_tail] =  packet;
     tmp->_m_tail = (tmp->_m_tail + 1) % DEFAULT_QUEUE_SIZE ;
+	tmp->_m_size ++;
     pthread_mutex_unlock( & tmp->_m_mutex );
 
     uint32_t size;
@@ -87,6 +88,7 @@ gbn_function_t send_packet( gbn_socket_t* sock ) {
     size = gbn_socket_serialize( & packet, buffer, SERIALIZE_SIZE );
 
     /* send the serialize packet */
+	debug3( "Sending a packet of size: %d\n", size );
     sendto( sock->_m_sockfd, buffer, size, 0,
         (struct sockaddr*)&sock->_m_to_addr,
             sizeof( struct sockaddr_in ) );
@@ -116,6 +118,25 @@ static gbn_function_t is_win_full_q ( gbn_socket_t* sock ) {
     return FCAST(wait_on_read) ;
 }
 
+static void millis_in_future( struct timespec* ts, long millis ) {
+	#ifdef __MACH__
+		clock_serv_t cclock;
+		mach_timespec_t mts;
+		host_get_clock_service(mach_host_self(), CALENDAR_CLOCK, &cclock);
+		clock_get_time(cclock, &mts);
+		mach_port_deallocate(mach_task_self(), cclock);
+		ts->tv_sec = mts.tv_sec;
+		ts->tv_nsec = mts.tv_nsec;
+	#else
+		clock_gettime(CLOCK_REALTIME, ts);
+	#endif
+
+    /* Add 50 ms */
+    ts->tv_nsec += millis * 1000000;
+	ts->tv_sec += ts->tv_nsec / 1000000000;
+	ts->tv_nsec %= 1000000000;
+}
+
 /* Waits for the reader to signal. If the
  * reader does not signal within the specified
  * timeout, then the next state is retransmission
@@ -126,22 +147,9 @@ static gbn_function_t wait_on_read  ( gbn_socket_t* sock ) {
     /* set the time to wait
      * until */
     struct timespec ts;
+	millis_in_future( &ts, 500 );
     /* Current time */
     //clock_gettime( CLOCK_REALTIME, & ts );
-	#ifdef __MACH__
-		clock_serv_t cclock;
-		mach_timespec_t mts;
-		host_get_clock_service(mach_host_self(), CALENDAR_CLOCK, &cclock);
-		clock_get_time(cclock, &mts);
-		mach_port_deallocate(mach_task_self(), cclock);
-		ts.tv_sec = mts.tv_sec;
-		ts.tv_nsec = mts.tv_nsec;
-	#else
-		clock_gettime(CLOCK_REALTIME, &ts);
-	#endif
-
-    /* Add 50 ms */
-    ts.tv_nsec += 50 * (1000000);
 
     /* Wait on the condition for the
      * reader to signal us on */
@@ -170,6 +178,7 @@ static gbn_function_t retransmit ( gbn_socket_t* sock ) {
 
     if( sock->_m_sending_window._m_size == 0 ) {
         /* should not happen */
+		debug4("[Writer] Window size == 0\n" );
         return FCAST( wait_on_read );
     }
 
@@ -182,6 +191,7 @@ static gbn_function_t retransmit ( gbn_socket_t* sock ) {
         size = gbn_socket_serialize( & tmp->_m_packet_buffer[i],
           buffer, SERIALIZE_SIZE );
     
+		debug4("[Writer] Sending buffer to socket\n" );
         sendto( sock->_m_sockfd, buffer, size, 0,
             (struct sockaddr*)&sock->_m_to_addr,
                 sizeof( struct sockaddr_in ) );

@@ -55,6 +55,7 @@ void gbn_socket_read_thread_main ( gbn_socket_t *socket) {
 		//We take one of two actions depending on what type of packet this is
 		switch (incoming_packet._m_type) {
 			case (gbn_packet_type_ack):
+				debug4("Received ACK packet.");
 				/* If this is an ack packet, we need to:
 				   		- Determine how many packets to acknowledge. (framediff)
 							I.E. If the first frame is 4, and an ack for 5 comes in,
@@ -83,6 +84,7 @@ void gbn_socket_read_thread_main ( gbn_socket_t *socket) {
 				}
 				break;
 			case (gbn_packet_type_data):
+				debug4("Received data packet.\n");
 				/* In this case we have received a data packet. We neet to:
 				   		- Put the packet in the window, if it is valid
 
@@ -118,6 +120,7 @@ void gbn_socket_read_thread_main ( gbn_socket_t *socket) {
 
 				//Remove as many received frames as possible from the front of the window
 				while (GET_RECEIVE_FRAME(socket, 0)._m_type != gbn_packet_type_uninitialized) {
+					debug4("Removing front frame from window.\n");
 					//If the type is not uninitialized, we can post it to the block queue
 					window_sliding_cursor = &GET_RECEIVE_FRAME(socket, 0);
 
@@ -139,6 +142,7 @@ void gbn_socket_read_thread_main ( gbn_socket_t *socket) {
 				}
 
 
+				debug4("Preparing to send cumulative ack for #%d\n", socket->_m_receive_window._m_recv_counter);
 				//Send a cumulative ack for all packets received up to this point
 				ack_packet._m_seq_number = socket->_m_receive_window._m_recv_counter;
 				//Ack packets are empty

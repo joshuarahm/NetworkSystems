@@ -21,7 +21,7 @@ int32_t GET_SEND_FRAME_id_delta(gbn_socket_t *socket, gbn_packet_t *packet) {
 }
 
 /* Entry point for the socket reader thread. */
-int gbn_read_thread_main ( gbn_socket_t *socket) {
+void gbn_socket_read_thread_main ( gbn_socket_t *socket) {
 	uint32_t sockaddr_size, bytes_recvd, wind_index;
 	uint32_t pack_size = DEFAULT_PACKET_SIZE+sizeof(gbn_packet_t);
 	gbn_packet_t ack_packet, incoming_packet;

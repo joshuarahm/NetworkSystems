@@ -134,6 +134,11 @@ static gbn_function_t retransmit ( gbn_socket_t* sock ) {
     uint8_t buffer[ SERIALIZE_SIZE ];
     gbn_window_t* tmp = &sock->_m_sending_window;
 
+    if( sock->_m_sending_window._m_size == 0 ) {
+        /* should not happen */
+        return FCAST( wait_on_read );
+    }
+
     /* start at the head */
     int i = sock->_m_sending_window._m_head;
 

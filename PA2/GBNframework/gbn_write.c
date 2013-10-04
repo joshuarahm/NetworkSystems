@@ -2,6 +2,11 @@
 
 #include <time.h>
 
+#ifdef __MACH__
+#include <mach/clock.h>
+#include <mach/mach.h>
+#endif
+
 /* this would ideally be a typedef to
  * a fuction that returns a function that
  * returns a function ... */
@@ -106,7 +111,19 @@ static gbn_function_t wait_on_read  ( gbn_socket_t* sock ) {
      * until */
     struct timespec ts;
     /* Current time */
-    clock_gettime( CLOCK_REALTIME, & ts );
+    //clock_gettime( CLOCK_REALTIME, & ts );
+	#ifdef __MACH__
+		clock_serv_t cclock;
+		mach_timespec_t mts;
+		host_get_clock_service(mach_host_self(), CALENDAR_CLOCK, &cclock);
+		clock_get_time(cclock, &mts);
+		mach_port_deallocate(mach_task_self(), cclock);
+		ts.tv_sec = mts.tv_sec;
+		ts.tv_nsec = mts.tv_nsec;
+	#else
+		clock_gettime(CLOCK_REALTIME, &ts);
+	#endif
+
     /* Add 50 ms */
     ts.tv_nsec += 50 * (1000000);
 

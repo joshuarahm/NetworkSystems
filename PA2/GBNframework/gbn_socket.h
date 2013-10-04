@@ -115,18 +115,18 @@ gbn_socket_t* gbn_socket_open_server( uint16_t port );
 /* Writes an array of bytes to the socket.
  * The write will block until all bytes are
  * successfully queued for sending */
-int gbn_socket_write ( gbn_socket_t* socket, const char* bytes, uint32_t len );
+int32_t gbn_socket_write ( gbn_socket_t* socket, const char* bytes, uint32_t len );
 
 /*
  * Reads up to `len` bytes and blocks unitl all bytes
  * are read
  */
-int gbn_socket_read  ( gbn_socket_t* socket, char* bytes, uint32_t len );
+int32_t gbn_socket_read  ( gbn_socket_t* socket, char* bytes, uint32_t len );
 
 /*
  * Closes the connection to the socket
  */
-int gbn_socket_close ( gbn_socket_t* socket );
+int32_t gbn_socket_close ( gbn_socket_t* socket );
 
 /* The main reading thread of execution for
  * the socket */

@@ -9,12 +9,17 @@ int main( int argc, char** argv ) {
     gbn_socket_t* sock;
 	uint8_t buf[DEFAULT_BUF_SIZE];
 
-    if(!argv[1]) {
+    if( ! argv[1] ) {
         fprintf( stderr, "File argument required\n" );
         return 1;
     }
 
-    sock = gbn_socket_open_server(5432) ;
+    if( ! argv[2] ) {
+        fprintf( stderr, "Host port required" );
+        return 1;
+    }
+
+    sock = gbn_socket_open_server( atoi( argv[2] ) ) ;
 
     if( sock == NULL ) {
         perror( "Unable to open socket on port 5432\n" );

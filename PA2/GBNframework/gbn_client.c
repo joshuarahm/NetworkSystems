@@ -15,8 +15,18 @@ int main( int argc, char** argv ) {
         return 1;
     }
 
+    if( ! argv[2] ) {
+        fprintf( stderr, "Host argument required\n" );
+        return 1;
+    }
+
+    if( ! argv[3] ) {
+        fprintf( stderr, "Host port required" );
+        return 1;
+    }
+
 	// 192.168.0.170
-    sock = gbn_socket_open_client( "38.89.2.211", 5432 ) ;
+    sock = gbn_socket_open_client( argv[2], atoi(argv[3]) ) ;
 
     FILE* read = fopen( argv[1], "r" );
 

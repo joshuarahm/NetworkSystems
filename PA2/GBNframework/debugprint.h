@@ -15,7 +15,7 @@
 //Color codes:
 //Karlphillip, http://stackoverflow.com/questions/3585846/color-text-in-terminal-aplications-in-unix
 
-#define _DEBUG_STMT_PRINT_(color, num, format, ...) do {fprintf(stderr, "%s%s:%s %s[%d]%s ", KGRN, __FILE__, KNRM, color, num, KNRM); fprintf(stderr, format,##__VA_ARGS__);} while (0);
+#define _DEBUG_STMT_PRINT_(color, num, format, ...) do {fprintf(stderr, "%s%s:%d%s %s[%d]%s ", KGRN, __FILE__, __LINE__, KNRM, color, num, KNRM); fprintf(stderr, format,##__VA_ARGS__);} while (0);
 
 #ifdef DEBUG4
 #define debug4(...)	_DEBUG_STMT_PRINT_(KRED, 4, __VA_ARGS__);

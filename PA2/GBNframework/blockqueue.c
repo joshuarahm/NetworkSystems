@@ -41,7 +41,7 @@ data_block_t* block_queue_pop_chunk(block_queue_t *queue) {
 
 	pthread_mutex_lock(queue->_m_modify_lock);
 
-	sem_post(queue->_m_write_sem);
+	sem_post(queue->_m_read_sem);
 	ret = queue->_m_data[queue->_m_tail];
 	queue->_m_tail++;
 	queue->_m_tail %= queue->_m_size;

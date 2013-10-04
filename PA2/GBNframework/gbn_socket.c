@@ -218,3 +218,33 @@ uint32_t gbn_socket_deserialize(uint8_t *buf, uint32_t buf_len, gbn_packet_t *pa
 	return packet->_m_size + SERIALIZE_OVERHEAD;
 }
 
+int32_t gbn_socket_write ( gbn_socket_t* socket, const char* bytes, uint32_t len ) {
+	uint32_t whole_blocks = (len/DEFAULT_PACKET_SIZE), cntr = 0, final_len = 0;
+	data_block_t *my_block;
+	uint8_t *out_buffer;
+	const uint8_t *cursor = (const uint8_t*) bytes;
+
+	//Copy as many whole blocks as we can. This loop should only generate blocks of
+	//DEFAULT_PACKET_SIZE in length.
+	for (cntr = 0; cntr < whole_blocks; cntr++) {
+		out_buffer = malloc(DEFAULT_PACKET_SIZE);
+		my_block = malloc(sizeof(data_block_t));
+		my_block->_m_len = DEFAULT_PACKET_SIZE;
+		memcpy(out_buffer, bytes, DEFAULT_PACKET_SIZE);
+		block_queue_push_chunk(&socket->_m_sending_buffer, my_block);
+		out_buffer += DEFAULT_PACKET_SIZE;
+	}
+
+	//If the input was not a proper multiple, there will be leftover bytes.
+	//We are guaranteed the number of bytes B is 0 <= B < DEFAULT_PACKET_SIZE
+	if (whole_blocks*DEFAULT_PACKET_SIZE < len) {
+		final_len = len - (whole_blocks*DEFAULT_PACKET_SIZE);
+		out_buffer = malloc(final_len);
+		my_block = malloc(sizeof(data_block_t));
+		my_block->_m_len = final_len;
+		memcpy(out_buffer, bytes, final_len);
+		block_queue_push_chunk(&socket->_m_sending_buffer, my_block);
+	}
+
+	return whole_blocks*DEFAULT_PACKET_SIZE + final_len;
+}

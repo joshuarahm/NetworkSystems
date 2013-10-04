@@ -5,6 +5,8 @@
 #include <semaphore.h>
 #include "blockqueue.h"
 
+#include "debugprint.h"
+
 void block_queue_init(block_queue_t *queue, uint32_t qsize) {
 	if (queue->_m_data)
 		free(queue->_m_data);
@@ -23,6 +25,7 @@ void block_queue_init(block_queue_t *queue, uint32_t qsize) {
 }
 
 void block_queue_push_chunk(block_queue_t *queue, data_block_t *data) {
+    debug2( "[Queue] data block pushed to queue: %p\n", data );
 	while (sem_wait(queue->_m_write_sem)); //sem_wait can be interrupted, so we loop until it returns success. (return code 0)
 
 	pthread_mutex_lock(queue->_m_modify_lock);
@@ -47,6 +50,7 @@ data_block_t* block_queue_pop_chunk(block_queue_t *queue) {
 	queue->_m_tail %= queue->_m_size;
 
 	pthread_mutex_unlock(queue->_m_modify_lock);
+    debug2( "[Queue] data block poped from queue: %p\n", ret );
 	return ret;
 }
 
@@ -61,6 +65,7 @@ data_block_t *block_queue_peek_chunk(block_queue_t *queue) {
 	ret = queue->_m_data[queue->_m_tail];
 
 	pthread_mutex_unlock(queue->_m_modify_lock);
+    debug2( "[Queue] data block peeked: %p\n", ret );
 	return ret;
 }
 

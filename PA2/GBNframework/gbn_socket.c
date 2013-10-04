@@ -182,7 +182,7 @@ int gbn_socket_close( gbn_socket_t* sock ) {
 	block_queue_push_chunk( & sock->_m_sending_buffer, & block );
 	pthread_join( sock->_m_write_thread, NULL );
     close( sock->_m_sockfd );
-	pthread_join( sock->_m_read_thread, NULL );
+	// pthread_join( sock->_m_read_thread, NULL );
 
     pthread_mutex_destroy( & sock->_m_mutex );
     pthread_cond_destroy(  & sock->_m_wait_for_ack );

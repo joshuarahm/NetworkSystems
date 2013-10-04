@@ -27,7 +27,7 @@ int main( int argc, char** argv ) {
     char buffer[READ_SIZE];
     size_t bytes_read;
 
-    while( (bytes_read = fread(buffer, READ_SIZE, 1, read)) > 0 ) {
+    while( (bytes_read = fread(buffer, 1, READ_SIZE, read)) > 0 ) {
         gbn_socket_write( sock, buffer, bytes_read );
     }
     

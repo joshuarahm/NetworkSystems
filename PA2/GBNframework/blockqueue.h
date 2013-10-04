@@ -5,11 +5,13 @@
 #include <semaphore.h>
 #include <stdint.h>
 
+#define IS_CLOSING 1
 
 /* Synchronized blocking queue for passing chunks between threads. */
 typedef struct {
 	uint8_t *_m_data;
 	uint32_t _m_len;
+	uint8_t _m_flags;
 } data_block_t;
 
 typedef struct {

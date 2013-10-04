@@ -121,6 +121,7 @@ void gbn_socket_read_thread_main ( gbn_socket_t *socket) {
 					to_rcv_queue = malloc(sizeof(data_block_t));
 					to_rcv_queue->_m_data = window_sliding_cursor->_m_payload; //We don't free payload either because it also goes up onto the block queue
 					to_rcv_queue->_m_len  = window_sliding_cursor->_m_size;
+					to_rcv_queue->_m_flags = 0;
 
 					block_queue_push_chunk(&(socket->_m_receive_buffer), to_rcv_queue);
 

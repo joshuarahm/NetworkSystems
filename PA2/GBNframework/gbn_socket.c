@@ -110,8 +110,8 @@ gbn_socket_t* gbn_socket_open_server( uint16_t port ) {
 
     /* Create a new socket and return int */
     ret = calloc( sizeof( gbn_socket_t ), 1 );
-    init_gbn_socket( ret );
     ret -> _m_sockfd = sock;
+    init_gbn_socket( ret );
 
     /* Return the socket */
     return ret;
@@ -236,6 +236,8 @@ int32_t gbn_socket_write ( gbn_socket_t* socket, const char* bytes, uint32_t len
 		out_buffer = malloc(DEFAULT_PACKET_SIZE);
 		my_block = malloc(sizeof(data_block_t));
 		my_block->_m_len = DEFAULT_PACKET_SIZE;
+		my_block->_m_data = out_buffer;
+		my_block->_m_flags = 0;
 		memcpy(out_buffer, cursor, DEFAULT_PACKET_SIZE);
 		block_queue_push_chunk(&socket->_m_sending_buffer, my_block);
 		cursor += DEFAULT_PACKET_SIZE;
@@ -247,7 +249,10 @@ int32_t gbn_socket_write ( gbn_socket_t* socket, const char* bytes, uint32_t len
 		final_len = len - (whole_blocks*DEFAULT_PACKET_SIZE);
 		out_buffer = malloc(final_len);
 		my_block = malloc(sizeof(data_block_t));
+
 		my_block->_m_len = final_len;
+		my_block->_m_data = out_buffer;
+		my_block->_m_flags = 0;
 		memcpy(out_buffer, cursor, final_len);
 		block_queue_push_chunk(&socket->_m_sending_buffer, my_block);
 	}

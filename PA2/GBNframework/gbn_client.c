@@ -7,32 +7,29 @@
 
 #define READ_SIZE (4096<<1)
 
+
+FILE* logger;
+
+//<server_ip_address> <server_port> <error_rate> <random_seed> <send_file> <send_log>
 int main( int argc, char** argv ) {
     (void) argc;
 
     gbn_socket_t* sock;
 
-    if( ! argv[1] ) {
-        fprintf( stderr, "File argument required\n" );
-        return 1;
-    }
+	if (argc < 6) {
+		fprintf("Usage:\n");
+		fprintf("./client <server_ip_address> <server_port> <error_rate> <random_seed> <send_file> <send_log>\n");
+		exit(1);
+	}
 
-    if( ! argv[2] ) {
-        fprintf( stderr, "Host argument required\n" );
-        return 1;
-    }
-
-    if( ! argv[3] ) {
-        fprintf( stderr, "Host port required" );
-        return 1;
-    }
+	logger = fopen(argv[6], "w");
         
-    init_net_lib( 0.00, time(NULL) );
+    init_net_lib( atof(argv[3]), atoi(argv[4]) );
 
 	// 192.168.0.170
-    sock = gbn_socket_open_client( argv[2], atoi(argv[3]) ) ;
+    sock = gbn_socket_open_client( argv[1], atoi(argv[2]) ) ;
 
-    FILE* read = fopen( argv[1], "r" );
+    FILE* read = fopen( argv[5], "r" );
 
     if( ! read ) {
         perror( "Could not open file" );

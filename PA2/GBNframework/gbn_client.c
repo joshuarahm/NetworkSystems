@@ -17,8 +17,8 @@ int main( int argc, char** argv ) {
     gbn_socket_t* sock;
 
 	if (argc < 6) {
-		fprintf("Usage:\n");
-		fprintf("./client <server_ip_address> <server_port> <error_rate> <random_seed> <send_file> <send_log>\n");
+		fprintf(stderr, "Usage:\n");
+		fprintf(stderr, "./client <server_ip_address> <server_port> <error_rate> <random_seed> <send_file> <send_log>\n");
 		exit(1);
 	}
 

@@ -102,7 +102,7 @@ gbn_function_t send_packet( gbn_socket_t* sock ) {
 
     struct timeval tv;
     gettimeofday( & tv, NULL );
-    fprintf(stderr, "Send seq=%d free_slots=%d lar=%d lfs=%d lfread=%d lfrcvd=%d laf=%d time=%d\n",
+    fprintf(logger, "Send seq=%d free_slots=%d lar=%d lfs=%d lfread=%d lfrcvd=%d laf=%d time=%d\n",
         (int)packet._m_seq_number,
 
         (int)DEFAULT_QUEUE_SIZE - sock->_m_sending_window._m_size,
@@ -248,7 +248,7 @@ static gbn_function_t retransmit ( gbn_socket_t* sock ) {
 		debug4("[Writer] Sending buffer to socket\n" );
         struct timeval tv;
         gettimeofday( & tv, NULL );
-        fprintf(stderr, "Resend seq=%d free_slots=%d lar=%d lfs=%d lfread=%d lfrcvd=%d laf=%d time=%d\n",
+        fprintf(logger, "Resend seq=%d free_slots=%d lar=%d lfs=%d lfread=%d lfrcvd=%d laf=%d time=%d\n",
             (int)tmp->_m_packet_buffer[i]._m_seq_number,
     
             (int)DEFAULT_QUEUE_SIZE - sock->_m_sending_window._m_size,

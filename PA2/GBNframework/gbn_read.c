@@ -62,7 +62,7 @@ void gbn_socket_read_thread_main ( gbn_socket_t *socket) {
 
         struct timeval tv;
         gettimeofday( & tv, NULL );
-        fprintf(stderr, "Send seq=%d free_slots=%d lar=%d lfs=%d lfread=%d lfrcvd=%d laf=%d time=%d\n",
+        fprintf(logger, "Receive seq=%d free_slots=%d lar=%d lfs=%d lfread=%d lfrcvd=%d laf=%d time=%d\n",
             (int)incoming_packet._m_seq_number,
     
             (int)DEFAULT_QUEUE_SIZE - socket->_m_sending_window._m_size,

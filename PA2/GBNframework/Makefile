@@ -31,4 +31,4 @@ sendto.o: sendto.c
 	$(CC) $(CFLAGS) $(DEBUGFLAGS) -o $@ -c $<
 
 clean:
-	rm *.o client server
+	rm *.o $(CLIENT) $(SERVER)

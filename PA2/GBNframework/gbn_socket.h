@@ -7,6 +7,9 @@
  * gbn_socket.h: <description>
  */
 
+#define LOG( fmt, ... ) \
+    fprintf( stderr, "[LOG] " fmt, ##__VA_ARGS )
+
 #include <inttypes.h>
 
 #include <pthread.h>
@@ -55,6 +58,7 @@ typedef struct {
     /* Pointer to this packet's
      * payload */
     uint8_t*         _m_payload;
+
 } gbn_packet_t;
 
 typedef struct {
@@ -114,6 +118,7 @@ typedef struct {
     uint32_t       _m_seq_number;
 
     struct sockaddr_in  _m_to_addr;
+    bool             _m_is_server;
 } gbn_socket_t;
 
 /* Opens a socket to the specified host name

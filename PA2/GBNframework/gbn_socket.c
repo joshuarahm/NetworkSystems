@@ -81,6 +81,7 @@ gbn_socket_t* gbn_socket_open_client( const char* hostname, uint16_t port ) {
         ret->_m_sockfd = sock;
         gethost( hostname, port, & ret->_m_to_addr );
         init_gbn_socket( ret );
+        ret->_m_is_server = 0;
     }
 
     /* Return the file descriptor */
@@ -117,6 +118,8 @@ gbn_socket_t* gbn_socket_open_server( uint16_t port ) {
     ret = calloc( sizeof( gbn_socket_t ), 1 );
     ret -> _m_sockfd = sock;
     init_gbn_socket( ret );
+
+    ret->_m_is_server = 1;
 
     /* Return the socket */
     return ret;

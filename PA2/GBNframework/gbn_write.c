@@ -79,6 +79,7 @@ gbn_function_t block_on_queue( gbn_socket_t* sock ) {
  * the window appropriately */
 gbn_function_t send_packet( gbn_socket_t* sock ) {
 	debug3("[Writer] Transitioning into state: send_packet\n")
+
     gbn_window_t* tmp = & sock->_m_sending_window;
 
     data_block_t* block = block_queue_peek_chunk( & sock->_m_sending_buffer );
@@ -96,6 +97,17 @@ gbn_function_t send_packet( gbn_socket_t* sock ) {
     packet._m_payload = block->_m_data;
     packet._m_seq_number = sock->_m_seq_number ++ ;;
 
+    struct timeval tv;
+    gettimeofday( & tv );
+    fprintf(stderr, "Send seq=%d free_slots=%d lar=%d lfs=%d time=%d", packet._m_seq_number,
+        DEFAULT_QUEUE_SIZE - sock->_m_sending_window._m_size,
+        sock->_m_seq_number,
+        sock->_m_sending_window._m_packet_buffer
+          [sock->_m_sending_window._m_tail]._m_seq_number,
+
+        tv.tv_sec
+
+        );
     /* We may want to make this our own
      * function */
     pthread_mutex_lock( & tmp->_m_mutex );

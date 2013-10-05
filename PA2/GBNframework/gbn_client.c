@@ -27,7 +27,7 @@ int main( int argc, char** argv ) {
         return 1;
     }
         
-    init_net_lib( 0.01, time(NULL) );
+    init_net_lib( 0.00, time(NULL) );
 
 	// 192.168.0.170
     sock = gbn_socket_open_client( argv[2], atoi(argv[3]) ) ;

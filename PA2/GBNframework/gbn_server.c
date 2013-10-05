@@ -29,9 +29,10 @@ int main( int argc, char** argv ) {
     FILE* read = fopen(argv[1], "w");
 
     uint32_t bytes_read=1;
-
+    uint32_t total_size=0;
     while ( (bytes_read = gbn_socket_read(sock, (char*)buf, DEFAULT_BUF_SIZE))) {
-		printf("Read %d bytes.\n", bytes_read);
+        total_size += bytes_read;
+		printf("Read %d bytes.\r", total_size);
         
 		fwrite(buf, 1, bytes_read, read);
 		//for (tmp=0; tmp < bytes_read; tmp++) {

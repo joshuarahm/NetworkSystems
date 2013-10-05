@@ -8,77 +8,66 @@
 #include "debugprint.h"
 
 void block_queue_init(block_queue_t *queue, uint32_t qsize) {
-	if (queue->_m_data)
-		free(queue->_m_data);
-	queue->_m_capacity = qsize;
-	queue->_m_head = 0;
-	queue->_m_tail = 0;
-	queue->_m_size = 0;
+    (void) qsize;
+	queue->_m_head = queue->_m_tail = queue->_m_size = 0;
 
-	queue->_m_data = malloc(sizeof(data_block_t)*qsize);
-	queue->_m_write_sem = malloc(sizeof(sem_t));
-	queue->_m_read_sem = malloc(sizeof(sem_t));
-	queue->_m_modify_lock = malloc(sizeof(pthread_mutex_t));
-	
-	sem_init(queue->_m_write_sem, 0, queue->_m_capacity);
-	sem_init(queue->_m_read_sem, 0, 0);
-	pthread_mutex_init(queue->_m_modify_lock, NULL);
+    pthread_cond_init( & queue->_m_write_cond, NULL );
+    pthread_cond_init( & queue->_m_read_cond, NULL );
+	pthread_mutex_init(& queue->_m_mutex, NULL);
 }
 
 void block_queue_push_chunk(block_queue_t *queue, data_block_t *data) {
-    debug2( "[Queue] data block pushed to queue: %p\n", data );
-	while (sem_wait(queue->_m_write_sem)); //sem_wait can be interrupted, so we loop until it returns success. (return code 0)
+    debug2( "[Queue %p] data block pushed to queue: %p\n", queue, data );
+	pthread_mutex_lock( & queue->_m_mutex );
 
-	pthread_mutex_lock(queue->_m_modify_lock);
+    if( queue->_m_size == QUEUE_CAPACITY ) {
+        pthread_cond_wait( & queue->_m_write_cond, & queue->_m_mutex );
+    }
 
-	sem_post(queue->_m_read_sem);
 	queue->_m_data[queue->_m_head] = data;
 	queue->_m_head++;
-	queue->_m_head %= queue->_m_capacity;
+	queue->_m_head %= QUEUE_CAPACITY;
 	queue->_m_size++;
 
-	pthread_mutex_unlock(queue->_m_modify_lock);
+	pthread_mutex_unlock( & queue->_m_mutex );
+    pthread_cond_signal( & queue->_m_read_cond );
 }
 
-data_block_t* block_queue_pop_chunk(block_queue_t *queue) {
-	data_block_t *ret;
-	while (sem_wait(queue->_m_read_sem)); //sem_wait can be interrupted, so we loop until it returns success. (return code 0)
+int block_queue_pop_chunk(block_queue_t *queue) {
+    debug2( "[Queue %p] data block popped from queue\n", queue );
+    if( queue->_m_size == 0 )
+        return -1;
 
-	pthread_mutex_lock(queue->_m_modify_lock);
+	pthread_mutex_lock( &queue->_m_mutex );;
 
-	sem_post(queue->_m_write_sem);
-	ret = queue->_m_data[queue->_m_tail];
 	queue->_m_tail++;
-	queue->_m_tail %= queue->_m_capacity;
+	queue->_m_tail %= QUEUE_CAPACITY;
 	queue->_m_size--;
 
-	pthread_mutex_unlock(queue->_m_modify_lock);
-    debug2( "[Queue] data block poped from queue: %p\n", ret );
-	return ret;
+    pthread_cond_signal( & queue->_m_write_cond );
+
+	pthread_mutex_unlock(&queue->_m_mutex);
+	return 0;
 }
 
 
 data_block_t *block_queue_peek_chunk(block_queue_t *queue) {
 	data_block_t *ret;
-	while (sem_wait(queue->_m_read_sem)); //sem_wait can be interrupted, so we loop until it returns success. (return code 0)
+	pthread_mutex_lock( & queue->_m_mutex );
 
-	pthread_mutex_lock(queue->_m_modify_lock);
+    if( queue->_m_size == 0 ) {
+        pthread_cond_wait( & queue->_m_read_cond, & queue->_m_mutex );
+    }
 
-	sem_post(queue->_m_read_sem);
 	ret = queue->_m_data[queue->_m_tail];
 
-	pthread_mutex_unlock(queue->_m_modify_lock);
+	pthread_mutex_unlock( & queue->_m_mutex );
     debug2( "[Queue] data block peeked: %p\n", ret );
 	return ret;
 }
 
 void block_queue_free(block_queue_t *queue) {
-	sem_destroy(queue->_m_read_sem);
-	sem_destroy(queue->_m_write_sem);
-	pthread_mutex_destroy(queue->_m_modify_lock);
-
-	free(queue->_m_data);
-	free(queue->_m_read_sem);
-	free(queue->_m_write_sem);
-	free(queue->_m_modify_lock);
+    pthread_cond_destroy( & queue->_m_read_cond );
+    pthread_cond_destroy( & queue->_m_write_cond );
+	pthread_mutex_destroy( & queue->_m_mutex );
 }

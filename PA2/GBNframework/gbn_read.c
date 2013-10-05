@@ -39,24 +39,24 @@ void gbn_socket_read_thread_main ( gbn_socket_t *socket) {
 
 	data_block_t *to_rcv_queue;
 
-	//Read thread should loop infinitely
+	/* Read thread should loop infinitely */
 	while (true) {
-		//malloc a new packet to receive into.
-		//incoming_packet = malloc(sizeof(gbn_packet_t));
+		/* malloc a new packet to receive into. */
+		/* incoming_packet = malloc(sizeof(gbn_packet_t)); */
 		if (socket->_m_read_status == socket_status_closed && socket->_m_receive_window._m_size == 0)
 			return;
 
-		//TODO: Do we need to timeout here?
+		/* TODO: Do we need to timeout here? */
 		debug4("Attempting to read from socket...\n");
 		if ((bytes_recvd = recvfrom(socket->_m_sockfd, incoming_buf, pack_size, 0, (struct sockaddr *) &(socket->_m_to_addr), &sockaddr_size)) < 0) 
 			return;
 
 		debug4("Received %d bytes of data\n", bytes_recvd);
 
-		//Deserialize the packet we received into packet
+		/* Deserialize the packet we received into packet */
 		gbn_socket_deserialize(incoming_buf, bytes_recvd, &incoming_packet);
 
-		//We take one of two actions depending on what type of packet this is
+		/* We take one of two actions depending on what type of packet this is */
 		switch (incoming_packet._m_type) {
 			case (gbn_packet_type_ack):
 				debug4("Received ACK packet #%d.\n", incoming_packet._m_seq_number);
@@ -73,7 +73,7 @@ void gbn_socket_read_thread_main ( gbn_socket_t *socket) {
 
 				framediff = GET_SEND_FRAME_id_delta(socket, &incoming_packet)+1;
 				if (framediff != -1) {
-					//Our ack is valid and corresponds to some number of packets in our window
+					/* Our ack is valid and corresponds to some number of packets in our window */
 					socket->_m_sending_window._m_head += framediff;
 					socket->_m_sending_window._m_head %= DEFAULT_QUEUE_SIZE;
 					socket->_m_sending_window._m_size -= framediff;
@@ -83,7 +83,7 @@ void gbn_socket_read_thread_main ( gbn_socket_t *socket) {
 				debug4("Curr sending window size: %d\n", socket->_m_sending_window._m_size);
 
 				if (framediff != -1) {
-					//Poke the writer
+					/* Poke the writer */
 					pthread_mutex_lock(&socket->_m_mutex);
 					pthread_cond_signal(&socket->_m_wait_for_ack);
 					pthread_mutex_unlock(&socket->_m_mutex);
@@ -99,7 +99,7 @@ void gbn_socket_read_thread_main ( gbn_socket_t *socket) {
 
 						- Send an ACK.
 				   */
-				//Make sure data packet is valid:
+				/* Make sure data packet is valid: */
 				debug4("Received packet id: %d\n", incoming_packet._m_seq_number);
 				if (incoming_packet._m_seq_number >= socket->_m_receive_window._m_recv_counter) {
 					if (incoming_packet._m_seq_number < socket->_m_receive_window._m_recv_counter + DEFAULT_QUEUE_SIZE) {
@@ -114,12 +114,12 @@ void gbn_socket_read_thread_main ( gbn_socket_t *socket) {
 						wind_index = incoming_packet._m_seq_number - socket->_m_receive_window._m_recv_counter;
 						GET_RECEIVE_FRAME(socket, wind_index) = incoming_packet;
 
-						//If the packet is outside the current window but still valid, we need to extend the window out to it.
-						//I.E. window contains [X,1] and 3 comes in, it needs to be expanded to [0,1,X,3] This increases size by 2.
+						/* If the packet is outside the current window but still valid, we need to extend the window out to it. */
+						/* I.E. window contains [X,1] and 3 comes in, it needs to be expanded to [0,1,X,3] This increases size by 2. */
 						framediff = incoming_packet._m_seq_number - GET_RECEIVE_FRAME(socket, socket->_m_receive_window._m_size)._m_seq_number+1;
 						if (framediff > 0) {
 							debug4("Shifting frame by %d.\n", framediff);
-							//The received frame is outside our window by 'framediff' number of frames. Expand to compensate.
+							/* The received frame is outside our window by 'framediff' number of frames. Expand to compensate. */
 							socket->_m_receive_window._m_tail += framediff;
 							socket->_m_receive_window._m_tail %= DEFAULT_QUEUE_SIZE;
 							socket->_m_receive_window._m_size += framediff;
@@ -127,34 +127,34 @@ void gbn_socket_read_thread_main ( gbn_socket_t *socket) {
 					}
 				}
 
-				//Remove as many received frames as possible from the front of the window
+				/* Remove as many received frames as possible from the front of the window */
 				while (GET_RECEIVE_FRAME(socket, 0)._m_type != gbn_packet_type_uninitialized) {
 					debug4("Removing front frame from window.\n");
-					//If the type is not uninitialized, we can post it to the block queue
+					/* If the type is not uninitialized, we can post it to the block queue */
 					window_sliding_cursor = &GET_RECEIVE_FRAME(socket, 0);
 
-					//Data_block_t's are malloc'd here, but it is the responsibility of whoever pops them to free them.
+					/* Data_block_t's are malloc'd here, but it is the responsibility of whoever pops them to free them. */
 					to_rcv_queue = malloc(sizeof(data_block_t));
-					to_rcv_queue->_m_data = window_sliding_cursor->_m_payload; //We don't free payload either because it also goes up onto the block queue
+					to_rcv_queue->_m_data = window_sliding_cursor->_m_payload; /* We don't free payload either because it also goes up onto the block queue */
 					to_rcv_queue->_m_len  = window_sliding_cursor->_m_size;
 					to_rcv_queue->_m_flags = 0;
 
 					block_queue_push_chunk(&(socket->_m_receive_buffer), to_rcv_queue);
 
-					//Now we need to move the window right one entry.
-					socket->_m_receive_window._m_recv_counter++; //We have ack'd one packet
-					socket->_m_receive_window._m_head++; //Head moves right one
-					socket->_m_receive_window._m_size--; //One less frame now.
+					/* Now we need to move the window right one entry. */
+					socket->_m_receive_window._m_recv_counter++; /* We have ack'd one packet */
+					socket->_m_receive_window._m_head++; /* Head moves right one */
+					socket->_m_receive_window._m_size--; /* One less frame now. */
 					
-					//We keep marking packets as uninitialized so we can tell received entries apart from non-received ones.
+					/* We keep marking packets as uninitialized so we can tell received entries apart from non-received ones. */
 					window_sliding_cursor->_m_type = gbn_packet_type_uninitialized;
 				}
 
 
 				debug4("Preparing to send cumulative ack for #%d\n", socket->_m_receive_window._m_recv_counter-1);
-				//Send a cumulative ack for all packets received up to this point
+				/* Send a cumulative ack for all packets received up to this point */
 				ack_packet._m_seq_number = socket->_m_receive_window._m_recv_counter-1;
-				//Ack packets are empty
+				/* Ack packets are empty */
 				ack_packet._m_size = 0;
 				ack_packet._m_type = gbn_packet_type_ack;
 
@@ -168,7 +168,7 @@ void gbn_socket_read_thread_main ( gbn_socket_t *socket) {
 			case gbn_packet_type_EOF:
 				socket->_m_read_status = socket_status_closed;
 				ack_packet._m_seq_number = 0;
-				//Ack packets are empty
+				/* Ack packets are empty */
 				ack_packet._m_size = 0;
 				ack_packet._m_type = gbn_packet_type_ack_EOF;
 
@@ -179,6 +179,13 @@ void gbn_socket_read_thread_main ( gbn_socket_t *socket) {
 				*block = (data_block_t){ NULL, 0, IS_CLOSING};
 				block_queue_push_chunk( & socket->_m_sending_buffer, block );
 
+				to_rcv_queue = malloc(sizeof(data_block_t));
+				to_rcv_queue->_m_data = NULL;
+				to_rcv_queue->_m_len = 0;
+				to_rcv_queue->_m_flags = IS_CLOSING;
+				block_queue_push_chunk( & socket->_m_receive_buffer, to_rcv_queue);
+
+				return;
 				break;
 			default:
 				break;

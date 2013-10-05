@@ -135,8 +135,9 @@ int gbn_socket_read( gbn_socket_t* sock, char* bytes, uint32_t len ) {
     size_t bytes_read = 0;
 
 	/* If the socket is closed, we will do no more reading */
-	if (sock->_m_status == socket_status_closed) 
+	if (sock->_m_status == socket_status_closed) {
 		return 0;
+    }
 
     /* Handle the original case where
      * the first block may be partially
@@ -154,13 +155,14 @@ int gbn_socket_read( gbn_socket_t* sock, char* bytes, uint32_t len ) {
     
         while( bytes_read < len ) {
 			debug4("block len: %d\n", block->_m_len);
-			if ( block->_m_len == 0 ) {
+
+            block = block_queue_peek_chunk( & sock->_m_receive_buffer );
+
+			if ( block->_m_flags & IS_CLOSING ) {
 				debug4("Found EOF block. Closing socket...\n");
 				sock->_m_status = socket_status_closed;
 				return bytes_read;
 			}
-
-            block = block_queue_peek_chunk( & sock->_m_receive_buffer );
     
             if( block->_m_len <= len - bytes_read ) {
                 /* The read will consume the block */

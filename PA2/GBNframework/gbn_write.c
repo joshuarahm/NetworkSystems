@@ -21,12 +21,12 @@ typedef void*(*gbn_function_t)(gbn_socket_t*);
 
 /* These are functions that represent
  * nodes in a state-machine diagram */
-static gbn_function_t window_empty_q ( gbn_socket_t* sock ) ;
-static gbn_function_t block_on_queue ( gbn_socket_t* sock ) ;
-static gbn_function_t send_packet    ( gbn_socket_t* sock );
-static gbn_function_t is_win_full_q  ( gbn_socket_t* sock );
-static gbn_function_t wait_on_read   ( gbn_socket_t* sock );
-static gbn_function_t retransmit     ( gbn_socket_t* sock );
+static gbn_function_t window_empty_q  ( gbn_socket_t* sock );
+static gbn_function_t block_on_queue  ( gbn_socket_t* sock );
+static gbn_function_t send_packet     ( gbn_socket_t* sock );
+static gbn_function_t is_win_full_q   ( gbn_socket_t* sock );
+static gbn_function_t wait_on_read    ( gbn_socket_t* sock );
+static gbn_function_t retransmit      ( gbn_socket_t* sock );
 static gbn_function_t close_connection( gbn_socket_t* sock );
 
 static gbn_function_t close_connection( gbn_socket_t* sock ) {
@@ -80,7 +80,9 @@ gbn_function_t block_on_queue( gbn_socket_t* sock ) {
 gbn_function_t send_packet( gbn_socket_t* sock ) {
 	debug3("[Writer] Transitioning into state: send_packet\n")
     gbn_window_t* tmp = & sock->_m_sending_window;
-    data_block_t* block = block_queue_pop_chunk( & sock->_m_sending_buffer );
+
+    data_block_t* block = block_queue_peek_chunk( & sock->_m_sending_buffer );
+    block_queue_pop_chunk( & sock->_m_sending_buffer );
 
 	if( block->_m_flags & IS_CLOSING ) {
 		debug2( "[Writer] Writer received EOF\n" );

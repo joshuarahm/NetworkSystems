@@ -7,8 +7,12 @@
  * gbn_socket.h: <description>
  */
 
+#include <stdio.h>
+
 #define LOG( fmt, ... ) \
     fprintf( stderr, "[LOG] " fmt, ##__VA_ARGS )
+
+extern FILE* logger;
 
 #include <inttypes.h>
 

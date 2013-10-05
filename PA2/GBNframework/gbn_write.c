@@ -1,6 +1,6 @@
 #include "gbn_socket.h"
 
-#include <time.h>
+#include <sys/time.h>
 
 #ifdef __MACH__
 #include <mach/clock.h>
@@ -75,6 +75,9 @@ gbn_function_t block_on_queue( gbn_socket_t* sock ) {
     return FCAST(send_packet);
 }
 
+#define BETTER_MOD( a, b ) \
+    ((a) + (b)) % (b)
+
 /* Sends a packet across the wire and updates
  * the window appropriately */
 gbn_function_t send_packet( gbn_socket_t* sock ) {
@@ -98,16 +101,25 @@ gbn_function_t send_packet( gbn_socket_t* sock ) {
     packet._m_seq_number = sock->_m_seq_number ++ ;;
 
     struct timeval tv;
-    gettimeofday( & tv );
-    fprintf(stderr, "Send seq=%d free_slots=%d lar=%d lfs=%d time=%d", packet._m_seq_number,
-        DEFAULT_QUEUE_SIZE - sock->_m_sending_window._m_size,
-        sock->_m_seq_number,
-        sock->_m_sending_window._m_packet_buffer
-          [sock->_m_sending_window._m_tail]._m_seq_number,
+    gettimeofday( & tv, NULL );
+    fprintf(logger, "Send seq=%d free_slots=%d lar=%d lfs=%d lfread=%d lfrcvd=%d laf=%d time=%d\n",
+        (int)packet._m_seq_number,
 
-        tv.tv_sec
+        (int)DEFAULT_QUEUE_SIZE - sock->_m_sending_window._m_size,
+        (int)sock->_m_sending_window._m_recv_counter,
 
-        );
+        (int)sock->_m_sending_window._m_packet_buffer
+          [BETTER_MOD(sock->_m_sending_window._m_tail-1,DEFAULT_QUEUE_SIZE)]._m_seq_number,
+
+        (int)sock->_m_receive_window._m_recv_counter,
+
+        (int)sock->_m_receive_window._m_packet_buffer
+          [BETTER_MOD(sock->_m_receive_window._m_tail-1,DEFAULT_QUEUE_SIZE)]._m_seq_number,
+
+        (int)sock->_m_receive_window._m_packet_buffer
+          [sock->_m_receive_window._m_head]._m_seq_number,
+        (int)tv.tv_sec
+    );
     /* We may want to make this our own
      * function */
     pthread_mutex_lock( & tmp->_m_mutex );
@@ -234,6 +246,26 @@ static gbn_function_t retransmit ( gbn_socket_t* sock ) {
           buffer, SERIALIZE_SIZE );
     
 		debug4("[Writer] Sending buffer to socket\n" );
+        struct timeval tv;
+        gettimeofday( & tv, NULL );
+        fprintf(logger, "Resend seq=%d free_slots=%d lar=%d lfs=%d lfread=%d lfrcvd=%d laf=%d time=%d\n",
+            (int)tmp->_m_packet_buffer[i]._m_seq_number,
+    
+            (int)DEFAULT_QUEUE_SIZE - sock->_m_sending_window._m_size,
+            (int)sock->_m_sending_window._m_recv_counter,
+    
+            (int)sock->_m_sending_window._m_packet_buffer
+            [BETTER_MOD(sock->_m_sending_window._m_tail-1,DEFAULT_QUEUE_SIZE)]._m_seq_number,
+    
+            (int)sock->_m_receive_window._m_recv_counter,
+    
+            (int)sock->_m_receive_window._m_packet_buffer
+            [BETTER_MOD(sock->_m_receive_window._m_tail-1,DEFAULT_QUEUE_SIZE)]._m_seq_number,
+    
+            (int)sock->_m_receive_window._m_packet_buffer
+            [sock->_m_receive_window._m_head]._m_seq_number,
+            (int)tv.tv_sec
+        );
         sendto( sock->_m_sockfd, buffer, size, 0,
             (struct sockaddr*)&sock->_m_to_addr,
                 sizeof( struct sockaddr_in ) );

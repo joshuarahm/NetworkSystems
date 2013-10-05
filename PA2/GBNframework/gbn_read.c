@@ -2,6 +2,8 @@
 #include "gbn_socket.h"
 #include "debugprint.h"
 
+#include <sys/time.h>
+
 #define GET_SEND_FRAME(sock, index) sock->_m_sending_window._m_packet_buffer[(sock->_m_sending_window._m_head+(index))%DEFAULT_QUEUE_SIZE]
 #define GET_SEND_SIZE(sock) sock->_m_sending_window._m_size
 #define GET_RECEIVE_FRAME(sock, index) sock->_m_receive_window._m_packet_buffer[(sock->_m_receive_window._m_head+(index))%DEFAULT_QUEUE_SIZE]
@@ -24,6 +26,8 @@ int32_t GET_SEND_FRAME_id_delta(gbn_socket_t *socket, gbn_packet_t *packet) {
 	return -2;
 }
 
+#define BETTER_MOD( a, b ) \
+    ((a) + (b)) % (b)
 /* Entry point for the socket reader thread. */
 void gbn_socket_read_thread_main ( gbn_socket_t *socket) {
 	int32_t bytes_recvd, wind_index;
@@ -55,6 +59,27 @@ void gbn_socket_read_thread_main ( gbn_socket_t *socket) {
 
 		/* Deserialize the packet we received into packet */
 		gbn_socket_deserialize(incoming_buf, bytes_recvd, &incoming_packet);
+
+        struct timeval tv;
+        gettimeofday( & tv, NULL );
+        fprintf(stderr, "Send seq=%d free_slots=%d lar=%d lfs=%d lfread=%d lfrcvd=%d laf=%d time=%d\n",
+            (int)incoming_packet._m_seq_number,
+    
+            (int)DEFAULT_QUEUE_SIZE - socket->_m_sending_window._m_size,
+            (int)socket->_m_sending_window._m_recv_counter,
+    
+            (int)socket->_m_sending_window._m_packet_buffer
+            [BETTER_MOD(socket->_m_sending_window._m_tail-1,DEFAULT_QUEUE_SIZE)]._m_seq_number,
+    
+            (int)socket->_m_receive_window._m_recv_counter,
+    
+            (int)socket->_m_receive_window._m_packet_buffer
+            [BETTER_MOD(socket->_m_receive_window._m_tail-1,DEFAULT_QUEUE_SIZE)]._m_seq_number,
+    
+            (int)socket->_m_receive_window._m_packet_buffer
+            [socket->_m_receive_window._m_head]._m_seq_number,
+            (int)tv.tv_sec
+        );
 
 		/* We take one of two actions depending on what type of packet this is */
 		switch (incoming_packet._m_type) {

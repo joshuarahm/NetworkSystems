@@ -161,24 +161,26 @@ void gbn_socket_read_thread_main ( gbn_socket_t *socket) {
 				ack_size = gbn_socket_serialize(&ack_packet, ack_serial, SERIALIZE_SIZE);
 				sendto_(socket->_m_sockfd, ack_serial, ack_size, 0, (struct sockaddr *) &(socket->_m_to_addr), sizeof(struct sockaddr_in));
 
-				if (incoming_packet._m_size == 0)
-					socket->_m_read_status = socket_status_closed;
-					ack_packet._m_seq_number = socket->_m_receive_window._m_recv_counter-1;
-					//Ack packets are empty
-					ack_packet._m_size = 0;
-					ack_packet._m_type = gbn_packet_type_ack;
-
-					ack_size = gbn_socket_serialize(&ack_packet, ack_serial, SERIALIZE_SIZE);
-					sendto_(socket->_m_sockfd, ack_serial, ack_size, 0, (struct sockaddr *) &(socket->_m_to_addr), sizeof(struct sockaddr_in));
-					block = malloc(sizeof(data_block_t));
-					*block = (data_block_t){ NULL, 0, IS_CLOSING};
-					block_queue_push_chunk( & socket->_m_sending_buffer, block );
-
-				break;
-			default:
 				break;
 			case gbn_packet_type_ack_EOF:
 				return;
+				break;
+			case gbn_packet_type_EOF:
+				socket->_m_read_status = socket_status_closed;
+				ack_packet._m_seq_number = 0;
+				//Ack packets are empty
+				ack_packet._m_size = 0;
+				ack_packet._m_type = gbn_packet_type_ack_EOF;
+
+				ack_size = gbn_socket_serialize(&ack_packet, ack_serial, SERIALIZE_SIZE);
+				sendto_(socket->_m_sockfd, ack_serial, ack_size, 0, (struct sockaddr *) &(socket->_m_to_addr), sizeof(struct sockaddr_in));
+
+				block = malloc(sizeof(data_block_t));
+				*block = (data_block_t){ NULL, 0, IS_CLOSING};
+				block_queue_push_chunk( & socket->_m_sending_buffer, block );
+
+				break;
+			default:
 				break;
 		}
 	}

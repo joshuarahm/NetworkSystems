@@ -196,9 +196,9 @@ int gbn_socket_close( gbn_socket_t* sock ) {
 	//Only send out ending blocks if the socket is still open
 	if (sock->_m_status == socket_status_open) {
 		data_block_t *block = malloc(sizeof(data_block_t));
-		*block = (data_block_t){ NULL, 0, 0};
+		/**block = (data_block_t){ NULL, 0, 0};
 		block_queue_push_chunk( & sock->_m_sending_buffer, block );
-		block = malloc(sizeof(data_block_t));
+		block = malloc(sizeof(data_block_t));*/
 		*block = (data_block_t){ NULL, 0, IS_CLOSING};
 		block_queue_push_chunk( & sock->_m_sending_buffer, block );
 		pthread_join( sock->_m_write_thread, NULL );

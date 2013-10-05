@@ -15,6 +15,7 @@ int main( int argc, char** argv ) {
 	if (argc < 5) {
 		fprintf( stderr, "Usage:\n");
 		fprintf( stderr, "./server <server_port> <error_rate> <random_seed> <output_file> <receive_log>\n");
+		exit(1);
 	}
 
 	logger = fopen(argv[5], "w");

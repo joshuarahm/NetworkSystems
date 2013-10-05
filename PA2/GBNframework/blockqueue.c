@@ -26,8 +26,14 @@ void block_queue_init(block_queue_t *queue, uint32_t qsize) {
 }
 
 void block_queue_push_chunk(block_queue_t *queue, data_block_t *data) {
+	int32_t tmp;
+	sem_getvalue(queue->_m_write_sem, &tmp);
+	debug3("write sem val: %d\n", tmp);
+	sem_getvalue(queue->_m_read_sem, &tmp);
+	debug3("read sem val: %d\n", tmp);
+
     debug2( "[Queue] data block pushed to queue: %p\n", data );
-	while (sem_wait(queue->_m_write_sem)); //sem_wait can be interrupted, so we loop until it returns success. (return code 0)
+	while (sem_wait(queue->_m_write_sem)){ debug4("SEMAPHORE BROKE")}; //sem_wait can be interrupted, so we loop until it returns success. (return code 0)
 
 	pthread_mutex_lock(queue->_m_modify_lock);
 
@@ -41,8 +47,13 @@ void block_queue_push_chunk(block_queue_t *queue, data_block_t *data) {
 }
 
 data_block_t* block_queue_pop_chunk(block_queue_t *queue) {
+	int32_t tmp;
+	sem_getvalue(queue->_m_write_sem, &tmp);
+	debug3("write sem val: %d\n", tmp);
+	sem_getvalue(queue->_m_read_sem, &tmp);
+	debug3("read sem val: %d\n", tmp);
 	data_block_t *ret;
-	while (sem_wait(queue->_m_read_sem)); //sem_wait can be interrupted, so we loop until it returns success. (return code 0)
+	while (sem_wait(queue->_m_read_sem)){ debug4("SEMAPHORE BROKE")}; //sem_wait can be interrupted, so we loop until it returns success. (return code 0)
 
 	pthread_mutex_lock(queue->_m_modify_lock);
 
@@ -59,8 +70,13 @@ data_block_t* block_queue_pop_chunk(block_queue_t *queue) {
 
 
 data_block_t *block_queue_peek_chunk(block_queue_t *queue) {
+	int32_t tmp;
+	sem_getvalue(queue->_m_write_sem, &tmp);
+	debug3("write sem val: %d\n", tmp);
+	sem_getvalue(queue->_m_read_sem, &tmp);
+	debug3("read sem val: %d\n", tmp);
 	data_block_t *ret;
-	while (sem_wait(queue->_m_read_sem)); //sem_wait can be interrupted, so we loop until it returns success. (return code 0)
+	while (sem_wait(queue->_m_read_sem)){ debug4("SEMAPHORE BROKE")}; //sem_wait can be interrupted, so we loop until it returns success. (return code 0)
 
 	pthread_mutex_lock(queue->_m_modify_lock);
 

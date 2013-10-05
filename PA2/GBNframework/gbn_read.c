@@ -179,6 +179,13 @@ void gbn_socket_read_thread_main ( gbn_socket_t *socket) {
 				*block = (data_block_t){ NULL, 0, IS_CLOSING};
 				block_queue_push_chunk( & socket->_m_sending_buffer, block );
 
+				to_rcv_queue = malloc(sizeof(data_block_t));
+				to_rcv_queue->_m_data = NULL;
+				to_rcv_queue->_m_len = 0;
+				to_rcv_queue->_m_flags = IS_CLOSING;
+				block_queue_push_chunk( & socket->_m_receive_buffer, to_rcv_queue);
+				return;
+
 				break;
 			default:
 				break;

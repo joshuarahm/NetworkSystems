@@ -30,8 +30,8 @@ static void init_gbn_socket( gbn_socket_t* sock ) {
     pthread_mutex_trylock( & sock->_m_mutex );
 
     /* Initialize out block queues */
-    block_queue_init( & sock->_m_receive_buffer, 128 );
-    block_queue_init( & sock->_m_sending_buffer, 128 );
+    block_queue_init( & sock->_m_receive_buffer, 128);
+    block_queue_init( & sock->_m_sending_buffer, 128);
 
     /* Kick off reading and writing
      * threads */
@@ -154,7 +154,7 @@ int gbn_socket_read( gbn_socket_t* sock, char* bytes, uint32_t len ) {
     
         while( bytes_read < len ) {
 			debug4("block len: %d\n", block->_m_len);
-			if ( block->_m_len == 0 ) {
+			if ( block->_m_flags & IS_CLOSING ) {
 				debug4("Found EOF block. Closing socket...\n");
 				sock->_m_status = socket_status_closed;
 				return bytes_read;

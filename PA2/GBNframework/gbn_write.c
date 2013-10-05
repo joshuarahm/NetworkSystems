@@ -27,6 +27,28 @@ static gbn_function_t send_packet    ( gbn_socket_t* sock );
 static gbn_function_t is_win_full_q  ( gbn_socket_t* sock );
 static gbn_function_t wait_on_read   ( gbn_socket_t* sock );
 static gbn_function_t retransmit     ( gbn_socket_t* sock );
+static gbn_function_t close_connection( gbn_socket_t* sock );
+
+static gbn_function_t close_connection( gbn_socket_t* sock ) {
+    gbn_packet_t packet;
+    uint32_t size;
+    packet._m_type = gbn_packet_type_EOF;
+    packet._m_size = 0;
+    packet._m_payload = NULL;
+    packet._m_seq_number = 0;
+
+    uint8_t buffer[ SERIALIZE_SIZE ];
+    size = gbn_socket_serialize( & packet, buffer, SERIALIZE_SIZE );
+
+    /* send the serialize packet */
+	debug3( "Sending the EOF packet: %d\n", size );
+    sendto_( sock->_m_sockfd, buffer, size, 0,
+        (struct sockaddr*)&sock->_m_to_addr,
+            sizeof( struct sockaddr_in ) );
+    
+    /* No more here */
+    return NULL;
+}
 
 /* If the window is empty, transition
  * to a block on queue state, otherwise
@@ -62,7 +84,7 @@ gbn_function_t send_packet( gbn_socket_t* sock ) {
 
 	if( block->_m_flags & IS_CLOSING ) {
 		debug2( "[Writer] Writer received EOF\n" );
-		return NULL;
+		return FCAST(close_connection);
 	}
 
     /* Construct a new packet */

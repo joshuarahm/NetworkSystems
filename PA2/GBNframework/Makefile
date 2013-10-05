@@ -5,7 +5,7 @@ OBJS:=blockqueue.o gbn_read.o gbn_socket.o gbn_write.o sendto.o
 LDFLAGS:=-lpthread -lrt
 CLIENT:=client
 SERVER:=server
-DEBUG?=2
+DEBUG?=4
 DEBUGFLAGS=-DDEBUG$(DEBUG)
 
 all: $(OBJS) gbn_client.o gbn_server.o

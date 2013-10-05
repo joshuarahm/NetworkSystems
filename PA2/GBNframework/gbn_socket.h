@@ -34,6 +34,7 @@ typedef enum {
     , gbn_packet_type_ack           = 0x1
     , gbn_packet_type_data          = 0x2
     , gbn_packet_type_EOF			= 0x3
+    , gbn_packet_type_ack_EOF		= 0x4
 } gbn_packet_type_e;
 
 typedef enum {

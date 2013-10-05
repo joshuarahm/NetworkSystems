@@ -6,6 +6,7 @@
 
 #include <netdb.h>
 #include <string.h>
+#include <signal.h>
 #include "debugprint.h"
 
 static void init_gbn_window( gbn_window_t* win ) {
@@ -203,6 +204,9 @@ int gbn_socket_close( gbn_socket_t* sock ) {
 		block_queue_push_chunk( & sock->_m_sending_buffer, block );
 		pthread_join( sock->_m_write_thread, NULL );
 	} else {
+        /* Tell reading thread to come
+         * home */
+        pthread_kill( sock->_m_read_thread, SIGUSR1 );
 		pthread_join( sock->_m_read_thread, NULL );
 	}
 

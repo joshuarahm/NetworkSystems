@@ -47,8 +47,22 @@ void gbn_socket_read_thread_main ( gbn_socket_t *socket) {
 
 		//TODO: Do we need to timeout here?
 		debug4("Attempting to read from socket...\n");
-		if((bytes_recvd = recvfrom(socket->_m_sockfd, incoming_buf, pack_size, 0, (struct sockaddr *) &(socket->_m_to_addr), &sockaddr_size)) < 0) 
-			return ;
+
+        if( socket->_m_status == socket_status_closed ) {
+            return ;
+        }
+
+		bytes_recvd = recvfrom(socket->_m_sockfd, incoming_buf, pack_size, 0,
+          (struct sockaddr *) &(socket->_m_to_addr), &sockaddr_size);
+
+        if( bytes_recvd < 0 ) {
+            if( errno == EINTR ) {
+                debug2("Reading thread interrupted! Breaking loop.\n");
+                /* This thread has been interrupted, time
+                 * to go */
+                return ;
+            }
+        }
 
 		debug4("Received %d bytes of data\n", bytes_recvd);
 

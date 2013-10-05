@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <errno.h>
 
+#include <time.h>
+
 #include "gbn_socket.h"
 
 #define READ_SIZE (4096<<1)
@@ -24,6 +26,8 @@ int main( int argc, char** argv ) {
         fprintf( stderr, "Host port required" );
         return 1;
     }
+        
+    init_net_lib( 0.01, time(NULL) );
 
 	// 192.168.0.170
     sock = gbn_socket_open_client( argv[2], atoi(argv[3]) ) ;

@@ -20,6 +20,7 @@ int main( int argc, char** argv ) {
     }
 
     sock = gbn_socket_open_server( atoi( argv[2] ) ) ;
+    init_net_lib( 0.01, time(NULL) );
 
     if( sock == NULL ) {
         perror( "Unable to open socket on port 5432\n" );

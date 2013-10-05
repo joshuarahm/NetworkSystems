@@ -3,8 +3,8 @@ CC=gcc
 CFLAGS:=-Wall -Wextra -g3 -ggdb
 OBJS:=blockqueue.o gbn_read.o gbn_socket.o gbn_write.o sendto.o
 LDFLAGS:=-lpthread -lrt
-CLIENT:=client
-SERVER:=server
+CLIENT:=GBNclient
+SERVER:=GBNserver
 DEBUG?=4
 DEBUGFLAGS=-DDEBUG$(DEBUG)
 

@@ -3,30 +3,30 @@
 
 #define DEFAULT_BUF_SIZE 4096
 
+FILE *logger;
+
+//<server_port> <error_rate> <random_seed> <output_file> <receive_log>
 int main( int argc, char** argv ) {
     (void) argc;
 
     gbn_socket_t* sock;
 	uint8_t buf[DEFAULT_BUF_SIZE];
 
-    if( ! argv[1] ) {
-        fprintf( stderr, "File argument required\n" );
-        return 1;
-    }
+	if (argc < 5) {
+		fprintf( stderr, "Usage:\n");
+		fprintf( stderr, "./server <server_port> <error_rate> <random_seed> <output_file> <receive_log>\n");
+	}
 
-    if( ! argv[2] ) {
-        fprintf( stderr, "Host port required" );
-        return 1;
-    }
+	logger = fopen(argv[5], "w");
 
-    sock = gbn_socket_open_server( atoi( argv[2] ) ) ;
-    init_net_lib( 0.00, time(NULL) );
+    sock = gbn_socket_open_server( atoi( argv[1] ) ) ;
+    init_net_lib( atof(argv[2]), atoi(argv[3]));
 
     if( sock == NULL ) {
         perror( "Unable to open socket on port 5432\n" );
         return 1;
     }
-    FILE* read = fopen(argv[1], "w");
+    FILE* read = fopen(argv[4], "w");
 
     uint32_t bytes_read=1;
     uint32_t total_size=0;

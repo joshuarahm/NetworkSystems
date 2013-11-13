@@ -1,5 +1,7 @@
 #include "router.h"
 
+#include <memory.h>
+
 int parse_router( uint8_t router_id, router_t* router, const char* filename ) {
 	FILE* file = fopen( filename, "r" );
 	routing_entry_t temp_entry;
@@ -9,6 +11,7 @@ int parse_router( uint8_t router_id, router_t* router, const char* filename ) {
 	/* The the cost as an int; we cant fill a byte
 	 * directly */
 	int cost;
+	memset( router, 0, sizeof( * router ) ); 
 
 	router->_m_id = router_id;
 
@@ -28,6 +31,11 @@ int parse_router( uint8_t router_id, router_t* router, const char* filename ) {
 		}
 
 		++ line;
+		if( tmp_id == router_id ) {
+			/* If this line is actually for this router we're configuring */
+			temp_entry.cost = (uint8_t) cost;
+			router->_m_table[ router->_m_num_routers ++ ] = temp_entry;
+		}
 	}
 
 	return 0;

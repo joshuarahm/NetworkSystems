@@ -58,7 +58,11 @@ typedef struct {
 	uint8_t cost[MAX_NUM_ROUTERS];
 } routing_packet_t;
 
+/* Read a router and it's starting table from the file */
 int parse_router( uint8_t router_id, router_t* router, const char* filename );
+
+/* Wait for the neighbors to come online */
+void wait_for_neighbors( router_t* router );
 
 void serialize(const routing_packet_t *packet, uint8_t *outbuf);
 

@@ -1,6 +1,70 @@
 #include "router.h"
 
 #include <memory.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <errno.h>
+#include <string.h>
+#include <sys/types.h>
+#include <time.h> 
+
+int try_connect( uint16_t port ) {
+	int sockfd = 0;
+    struct sockaddr_in serv_addr; 
+
+    if((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+        printf("\n Error : Could not create socket \n");
+        return 0;
+    } 
+
+    memset(&serv_addr, 0, sizeof(serv_addr)); 
+
+    serv_addr.sin_family = AF_INET;
+    serv_addr.sin_port = htons(port); 
+
+    if(inet_pton(AF_INET, "localhost", &serv_addr.sin_addr)<=0) {
+        printf("\n inet_pton error occured\n");
+        return 0;
+    } 
+
+    if( connect(sockfd, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0) {
+       printf("\n Error : Connect Failed \n");
+       return 0;
+    } 
+
+
+    return sockfd;
+}
+
+/* If trying to connect to the neighbors failed,
+ * then this function is called which waits for the
+ * neighbors to connect to us.
+ *
+ * The file descriptor for the server
+ * is stored in serv_fd and the accepted
+ * client file descriptor is returned
+ */
+int listen_connect( uint16_t port, int* serv_fd ) {
+    int listen_fd = 0;
+    struct sockaddr_in serv_addr; 
+
+    listen_fd = socket(AF_INET, SOCK_STREAM, 0);
+    memset(&serv_addr, 0, sizeof(serv_addr));
+
+    serv_addr.sin_family = AF_INET;
+    serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+    serv_addr.sin_port = htons(port); 
+
+    bind(listen_fd, (struct sockaddr*)&serv_addr, sizeof(serv_addr)); 
+    listen(listen_fd, 1); 
+
+    *serv_fd = listen_fd;
+    return accept(listen_fd, (struct sockaddr*)NULL, NULL); 
+}
 
 int parse_router( uint8_t router_id, router_t* router, const char* filename ) {
 	FILE* file = fopen( filename, "r" );
@@ -23,7 +87,10 @@ int parse_router( uint8_t router_id, router_t* router, const char* filename ) {
 		& temp_entry.outgoing_tcp_port,
 		& temp_entry.dest_id,
 		& temp_entry.dest_tcp_port,
-		& cost ) ) ) {
+		& cost ) ) != EOF ) {
+
+		/* Read off newline (If there is one) */
+		fgetc( file );
 
 		if( n_filled < 5 ) {
 			fprintf( stderr, "malformed file; line %d\n", line );

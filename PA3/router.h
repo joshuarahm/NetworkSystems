@@ -32,6 +32,7 @@ typedef struct {
 } routing_entry_t;
 
 #define MAX_NUM_ROUTERS 32
+#define LS_PACKET_OVERHEAD 6
 /*
  * A struct that defines a router.
  *

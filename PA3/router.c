@@ -112,9 +112,10 @@ void serialize(const ls_packet *packet, uint8_t *outbuf) {
 	int i;
 	outbuf[0] = packet->should_close;
 	outbuf[1] = packet->num_entries;
+	outbuf[2] = packet->seq_num;
 	for (i = 0; i < packet->num_entries; i++) {
-		outbuf[ (2*i)+2 ] = packet->dest_id[i];
-		outbuf[ (2*i)+2+1 ] = packet->cost[i];
+		outbuf[ (2*i)+3 ] = packet->dest_id[i];
+		outbuf[ (2*i)+3+1 ] = packet->cost[i];
 	}
 }
 
@@ -122,17 +123,19 @@ void deserialize(ls_packet *packet, const uint8_t *inbuf) {
 	int i;
 	packet->should_close = inbuf[0];
 	packet->num_entries = inbuf[1];
+	packet->seq_num = inbuf[2];
 	for (i = 0; i < packet->num_entries; i++) {
-		packet->dest_id[i] = inbuf[(2*i)+2];
-		packet->cost[i] = inbuf[(2*i)+2+1];
+		packet->dest_id[i] = inbuf[(2*i)+3];
+		packet->cost[i] = inbuf[(2*i)+3+1];
 	}
 }
 
-void create_packet(const router_t *router, uint8_t should_close) {
+void create_packet(router_t *router, uint8_t should_close) {
 	int i;
 	ls_packet tmp;
 	tmp.should_close = should_close;
 	tmp.num_entries = router->_m_num_neighbors;
+	tmp.seq_num = ++(router->_m_seq_num);
 	for (i = 0; i < tmp.num_entries; i++) {
 		tmp.dest_id[i] = router->_m_neighbors_table[i].dest_id;
 	}

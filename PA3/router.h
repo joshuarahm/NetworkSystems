@@ -72,6 +72,6 @@ void serialize(const ls_packet *packet, uint8_t *outbuf);
 
 void deserialize(ls_packet *packet, const uint8_t *inbuf);
 
-void create_packet(const router_t *router, uint8_t should_close);
+void create_packet(router_t *router, uint8_t should_close);
 
 #endif /* ROUTER_H_ */

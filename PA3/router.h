@@ -39,8 +39,14 @@ typedef struct {
 } routing_entry_t;
 
 typedef struct {
+    /* The id of the neighbor */
+    node_t   node_id;
+
 	uint16_t outgoing_tcp_port;
 	uint16_t dest_tcp_port;
+
+    /* edge cost for this neighbor */
+    uint8_t  cost;
 
     SOCKET   serv_fd;
     SOCKET   sock_fd;
@@ -69,10 +75,10 @@ typedef struct {
     /* This table contains indexes of the destinations according
      * to their IDs. So the routing_entry for A can be found
      * by doing _m_destinations[ _m_routing_table[ 'A' ] ] */
-    int _m_routing_table[ 255 ];
+    uint8_t _m_routing_table[ 255 ];
 
     /* The array of neighbors */
-	uint8_t         _m_num_neighbors;
+	uint8_t    _m_num_neighbors;
 	neighbor_t _m_neighbors_table[MAX_NUM_ROUTERS];
 } router_t;
 
@@ -94,7 +100,11 @@ typedef struct {
 	uint8_t cost[MAX_NUM_ROUTERS];
 } ls_packet;
 
-routing_entry_t* Router_GetRoutingEntryForNode( node_t routing_node );
+/* Returns a routing entry for the node given */
+routing_entry_t* Router_GetRoutingEntryForNode( router_t* router, node_t routing_node );
+
+/* Returns the neighbor that will route */
+neighbor_t* Router_GetNeighborForRoutingEntry( router_t* router, routing_entry_t* routing_entry );
 
 /* Read a router and it's starting table from the file */
 int parse_router( uint8_t router_id, router_t* router, const char* filename );
@@ -107,9 +117,6 @@ void serialize(const ls_packet *packet, uint8_t *outbuf);
 void deserialize(ls_packet *packet, const uint8_t *inbuf);
 
 uint8_t *create_packet(router_t *router, uint8_t should_close);
-
-/* Returns -1 when node id not found in routing table */
-int32_t get_routing_index(router_t *router, uint8_t id);
 
 uint8_t packet_has_update(ls_packet *orig, ls_packet *new);
 

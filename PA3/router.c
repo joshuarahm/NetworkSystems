@@ -206,25 +206,52 @@ void wait_for_neighbors( router_t* router ) {
 }
 
 uint8_t packet_has_update(ls_packet *orig, ls_packet *incoming) {
+	uint8_t i;
 	//p1->
-	return 0;
+	if (incoming->seq_num > orig->seq_num) {
+		if (incoming->num_entries == orig->num_entries) {
+			for (i = 0; i < incoming->num_entries; i++) {
+				if (incoming->dest_id[i] == orig->dest_id[i] &&
+						incoming->cost[i] == orig->cost[i]) {
+					return 0; //Packet contains all the same entries
+				}
+				return 1; //Same number of entries, but different contents
+			}
+		}
+		return 1; //The number of entries vary
+	} 
+	return 0; //Seq num was too old
 }
 
 uint8_t update_routing_table(router_t *router, ls_packet *packet) {
 	int curr_node_index;
+	routing_entry_t *old_entry;
 
 	node_t min_node;
-	uint8_t cost;
-
+	uint8_t cost = 255;
+	
 	router_set_t current;
+	if ((old_entry = Router_GetRoutingEntryForNode(router, packet->origin))) {
+		if (!packet_has_update(old_entry->packet, packet)) {
+			return 0;
+		}
+	} else {
+		//TODO: Add packet to routing table
+	}
+	//Packet must contain new info
+
+
 	current.num_routers = 1;
 	current.id[0] = router->_m_id;
 	for (int i=0;i<256;i++) current.distmap[i]=-1;
-	for (current.num_routers = 1; current.num_routers < router->_m_num_destinations; current.num_routers++) {
+	for (current.num_routers = 1; current.num_routers < router->_m_num_destinations+1; current.num_routers++) {
 		for (curr_node_index = 0; curr_node_index < current.num_routers; curr_node_index++) {
-			 //if (current.
+			 if (current.id[curr_node_index] == router->_m_id) {
+				 //We don't have an LSP packet for ourself, we instead check our neighbor costs
+			 } else {
+				 //Everyone else should have an entry in the routing table
 
-
+			 }
 		}
 	}
 	return 0;

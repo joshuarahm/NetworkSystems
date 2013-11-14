@@ -119,8 +119,9 @@ void deserialize(ls_packet *packet, const uint8_t *inbuf);
 
 uint8_t *create_packet(router_t *router, uint8_t should_close);
 
-uint8_t packet_has_update(ls_packet *orig, ls_packet *new);
+uint8_t packet_has_update(ls_packet *orig, ls_packet *incoming);
 
+/* Returns 1 if an actual update occurred. */
 uint8_t update_routing_table(router_t *router, ls_packet *incoming);
 
 #endif /* ROUTER_H_ */

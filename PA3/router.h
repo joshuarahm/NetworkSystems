@@ -10,8 +10,28 @@
 #include <inttypes.h>
 #include <stdio.h>
 
+#define MAX_NUM_ROUTERS 32
+#define LS_PACKET_OVERHEAD 7
+
 typedef int SOCKET;
 typedef uint8_t node_t;
+
+/* 
+ * A struct that defines the packet header used to communicate
+ * between link-state routers.
+ * should_close: A boolean to tell the receiver to close
+ * num_entries: The number of entries in the packet
+ * dest_id[]: List of destinations.
+ * cost[]: List of costs for the above destinations.
+ */
+typedef struct {
+	uint8_t origin;
+	uint8_t should_close;
+	uint8_t num_entries;
+	uint32_t seq_num;
+	uint8_t dest_id[MAX_NUM_ROUTERS];
+	uint8_t cost[MAX_NUM_ROUTERS];
+} ls_packet;
 
 /*
  * An entry in the routing table
@@ -34,9 +54,8 @@ typedef struct {
     /* The total cost to get to the destination */
 	uint8_t cost;
 
-    /* The last seen sequence number from the
-     * destination */
-	uint32_t seq_num;
+	/* The last packet we have seen that originated from dest_id */
+	ls_packet *packet;
 } routing_entry_t;
 
 typedef struct {
@@ -53,8 +72,12 @@ typedef struct {
     SOCKET   sock_fd;
 } neighbor_t;
 
-#define MAX_NUM_ROUTERS 32
-#define LS_PACKET_OVERHEAD 6
+typedef struct {
+	uint8_t num_routers;
+	uint8_t id[MAX_NUM_ROUTERS];
+	uint32_t distmap[256];
+} router_set_t;
+
 /*
  * A struct that defines a router.
  *
@@ -79,22 +102,6 @@ typedef struct {
 } router_t;
 
 
-/* 
- * A struct that defines the packet header used to communicate
- * between link-state routers.
- * should_close: A boolean to tell the receiver to close
- * num_entries: The number of entries in the packet
- * dest_id[]: List of destinations.
- * cost[]: List of costs for the above destinations.
- */
-typedef struct {
-	uint8_t should_close;
-	uint8_t num_entries;
-	uint32_t seq_num;
-	uint8_t dest_id[MAX_NUM_ROUTERS];
-	uint8_t cost[MAX_NUM_ROUTERS];
-} ls_packet;
-
 /* Returns a routing entry for the node given */
 routing_entry_t* Router_GetRoutingEntryForNode( router_t* router, node_t routing_node );
 
@@ -114,5 +121,9 @@ void deserialize(ls_packet *packet, const uint8_t *inbuf);
 uint8_t *create_packet(router_t *router, uint8_t should_close);
 
 void close_router( router_t *router );
+
+uint8_t packet_has_update(ls_packet *orig, ls_packet *new);
+
+uint8_t update_routing_table(router_t *router, ls_packet *incoming);
 
 #endif /* ROUTER_H_ */

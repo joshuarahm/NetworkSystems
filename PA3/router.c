@@ -116,7 +116,8 @@ void serialize(const ls_packet *packet, uint8_t *outbuf) {
 	int i;
 	outbuf[0] = packet->should_close;
 	outbuf[1] = packet->num_entries;
-	uint32_t *seq_num_ptr = (uint32_t*) outbuf+2;
+	outbuf[2] = packet->origin;
+	uint32_t *seq_num_ptr = (uint32_t*) outbuf+3;
 	*seq_num_ptr = htonl(packet->seq_num);
 	for (i = 0; i < packet->num_entries; i++) {
 		outbuf[(2*i)+LS_PACKET_OVERHEAD] = packet->dest_id[i];
@@ -128,7 +129,8 @@ void deserialize(ls_packet *packet, const uint8_t *inbuf) {
 	int i;
 	packet->should_close = inbuf[0];
 	packet->num_entries = inbuf[1];
-	uint32_t *seq_num_ptr = (uint32_t*) inbuf+2;
+	packet->origin = inbuf[2];
+	uint32_t *seq_num_ptr = (uint32_t*) inbuf+3;
 	*seq_num_ptr = htonl(packet->seq_num);
 	for (i = 0; i < packet->num_entries; i++) {
 		packet->dest_id[i] = inbuf[(2*i)+LS_PACKET_OVERHEAD];
@@ -221,4 +223,28 @@ void close_router( router_t* router ) {
 
         close( neighbor->sock_fd );
     }
+
+uint8_t packet_has_update(ls_packet *orig, ls_packet *incoming) {
+	//p1->
+	return 0;
+}
+
+uint8_t update_routing_table(router_t *router, ls_packet *packet) {
+	int curr_node_index;
+
+	node_t min_node;
+	uint8_t cost;
+
+	router_set_t current;
+	current.num_routers = 1;
+	current.id[0] = router->_m_id;
+	for (int i=0;i<256;i++) current.distmap[i]=-1;
+	for (current.num_routers = 1; current.num_routers < router->_m_num_destinations; current.num_routers++) {
+		for (curr_node_index = 0; curr_node_index < current.num_routers; curr_node_index++) {
+			 //if (current.
+
+
+		}
+	}
+	return 0;
 }

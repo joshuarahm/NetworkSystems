@@ -112,10 +112,11 @@ void serialize(const ls_packet *packet, uint8_t *outbuf) {
 	int i;
 	outbuf[0] = packet->should_close;
 	outbuf[1] = packet->num_entries;
-	outbuf[2] = packet->seq_num;
+	uint32_t *seq_num_ptr = (uint32_t*) outbuf+2;
+	*seq_num_ptr = htonl(packet->seq_num);
 	for (i = 0; i < packet->num_entries; i++) {
-		outbuf[ (2*i)+3 ] = packet->dest_id[i];
-		outbuf[ (2*i)+3+1 ] = packet->cost[i];
+		outbuf[(2*i)+6] = packet->dest_id[i];
+		outbuf[(2*i)+6+1] = packet->cost[i];
 	}
 }
 
@@ -123,10 +124,11 @@ void deserialize(ls_packet *packet, const uint8_t *inbuf) {
 	int i;
 	packet->should_close = inbuf[0];
 	packet->num_entries = inbuf[1];
-	packet->seq_num = inbuf[2];
+	uint32_t *seq_num_ptr = (uint32_t*) inbuf+2;
+	*seq_num_ptr = htonl(packet->seq_num);
 	for (i = 0; i < packet->num_entries; i++) {
-		packet->dest_id[i] = inbuf[(2*i)+3];
-		packet->cost[i] = inbuf[(2*i)+3+1];
+		packet->dest_id[i] = inbuf[(2*i)+6];
+		packet->cost[i] = inbuf[(2*i)+6+1];
 	}
 }
 

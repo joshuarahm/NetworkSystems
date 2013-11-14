@@ -25,6 +25,7 @@ typedef int SOCKET;
 typedef struct {
 	uint8_t dest_id;
 	uint8_t cost;
+	uint32_t seq_num;
 
 	uint16_t outgoing_tcp_port;
 	uint16_t dest_tcp_port;
@@ -57,7 +58,7 @@ typedef struct {
 typedef struct {
 	uint8_t should_close;
 	uint8_t num_entries;
-	uint8_t seq_num;
+	uint32_t seq_num;
 	uint8_t dest_id[MAX_NUM_ROUTERS];
 	uint8_t cost[MAX_NUM_ROUTERS];
 } ls_packet;

@@ -38,8 +38,11 @@ typedef struct {
  */
 typedef struct {
 	uint8_t         _m_id;
+	uint32_t		_m_seq_num;
 	uint8_t         _m_num_routers;
-	routing_entry_t _m_table[MAX_NUM_ROUTERS];
+	routing_entry_t _m_routing_table[MAX_NUM_ROUTERS];
+	uint8_t         _m_num_neighbors;
+	routing_entry_t _m_neighbors_table[MAX_NUM_ROUTERS];
 } router_t;
 
 
@@ -54,9 +57,10 @@ typedef struct {
 typedef struct {
 	uint8_t should_close;
 	uint8_t num_entries;
+	uint8_t seq_num;
 	uint8_t dest_id[MAX_NUM_ROUTERS];
 	uint8_t cost[MAX_NUM_ROUTERS];
-} routing_packet_t;
+} ls_packet;
 
 /* Read a router and it's starting table from the file */
 int parse_router( uint8_t router_id, router_t* router, const char* filename );
@@ -64,8 +68,10 @@ int parse_router( uint8_t router_id, router_t* router, const char* filename );
 /* Wait for the neighbors to come online */
 void wait_for_neighbors( router_t* router );
 
-void serialize(const routing_packet_t *packet, uint8_t *outbuf);
+void serialize(const ls_packet *packet, uint8_t *outbuf);
 
-void deserialize(routing_packet_t *packet, const uint8_t *inbuf);
+void deserialize(ls_packet *packet, const uint8_t *inbuf);
+
+void create_packet(const router_t *router, uint8_t should_close);
 
 #endif /* ROUTER_H_ */

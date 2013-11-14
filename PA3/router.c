@@ -101,14 +101,14 @@ int parse_router( uint8_t router_id, router_t* router, const char* filename ) {
 		if( tmp_id == router_id ) {
 			/* If this line is actually for this router we're configuring */
 			temp_entry.cost = (uint8_t) cost;
-			router->_m_table[ router->_m_num_routers ++ ] = temp_entry;
+			router->_m_neighbors_table[ router->_m_num_routers ++ ] = temp_entry;
 		}
 	}
 	return 0;
 }
 
 
-void serialize(const routing_packet_t *packet, uint8_t *outbuf) {
+void serialize(const ls_packet *packet, uint8_t *outbuf) {
 	int i;
 	outbuf[0] = packet->should_close;
 	outbuf[1] = packet->num_entries;
@@ -118,12 +118,22 @@ void serialize(const routing_packet_t *packet, uint8_t *outbuf) {
 	}
 }
 
-void deserialize(routing_packet_t *packet, const uint8_t *inbuf) {
+void deserialize(ls_packet *packet, const uint8_t *inbuf) {
 	int i;
 	packet->should_close = inbuf[0];
 	packet->num_entries = inbuf[1];
 	for (i = 0; i < packet->num_entries; i++) {
 		packet->dest_id[i] = inbuf[(2*i)+2];
 		packet->cost[i] = inbuf[(2*i)+2+1];
+	}
+}
+
+void create_packet(const router_t *router, uint8_t should_close) {
+	int i;
+	ls_packet tmp;
+	tmp.should_close = should_close;
+	tmp.num_entries = router->_m_num_neighbors;
+	for (i = 0; i < tmp.num_entries; i++) {
+		tmp.dest_id[i] = router->_m_neighbors_table[i].dest_id;
 	}
 }

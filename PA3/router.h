@@ -37,11 +37,31 @@ typedef struct {
  * _m_id: the id of this router (private)
  */
 typedef struct {
-	uint8_t _m_id;
+	uint8_t         _m_id;
 	uint8_t         _m_num_routers;
 	routing_entry_t _m_table[MAX_NUM_ROUTERS];
 } router_t;
 
+
+/* 
+ * A struct that defines the packet header used to communicate
+ * between link-state routers.
+ * should_close: A boolean to tell the receiver to close
+ * num_entries: The number of entries in the packet
+ * dest_id[]: List of destinations.
+ * cost[]: List of costs for the above destinations.
+ */
+typedef struct {
+	uint8_t should_close;
+	uint8_t num_entries;
+	uint8_t dest_id[MAX_NUM_ROUTERS];
+	uint8_t cost[MAX_NUM_ROUTERS];
+} routing_packet_t
+
 int parse_router( uint8_t router_id, router_t* router, const char* filename );
+
+void serialize(const routing_packet_t *packet, uint8_t *outbuf);
+
+void deserialize(routing_packet_t *packet, const uint8_t *inbuf);
 
 #endif /* ROUTER_H_ */

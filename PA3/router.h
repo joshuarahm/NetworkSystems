@@ -10,8 +10,28 @@
 #include <inttypes.h>
 #include <stdio.h>
 
+#define MAX_NUM_ROUTERS 32
+#define LS_PACKET_OVERHEAD 7
+
 typedef int SOCKET;
 typedef uint8_t node_t;
+
+/* 
+ * A struct that defines the packet header used to communicate
+ * between link-state routers.
+ * should_close: A boolean to tell the receiver to close
+ * num_entries: The number of entries in the packet
+ * dest_id[]: List of destinations.
+ * cost[]: List of costs for the above destinations.
+ */
+typedef struct {
+	uint8_t origin;
+	uint8_t should_close;
+	uint8_t num_entries;
+	uint32_t seq_num;
+	uint8_t dest_id[MAX_NUM_ROUTERS];
+	uint8_t cost[MAX_NUM_ROUTERS];
+} ls_packet;
 
 /*
  * An entry in the routing table
@@ -58,8 +78,6 @@ typedef struct {
 	uint32_t distmap[256];
 } router_set_t;
 
-#define MAX_NUM_ROUTERS 32
-#define LS_PACKET_OVERHEAD 7
 /*
  * A struct that defines a router.
  *
@@ -82,23 +100,6 @@ typedef struct {
 	neighbor_t _m_neighbors_table[MAX_NUM_ROUTERS];
 } router_t;
 
-
-/* 
- * A struct that defines the packet header used to communicate
- * between link-state routers.
- * should_close: A boolean to tell the receiver to close
- * num_entries: The number of entries in the packet
- * dest_id[]: List of destinations.
- * cost[]: List of costs for the above destinations.
- */
-typedef struct {
-	uint8_t origin;
-	uint8_t should_close;
-	uint8_t num_entries;
-	uint32_t seq_num;
-	uint8_t dest_id[MAX_NUM_ROUTERS];
-	uint8_t cost[MAX_NUM_ROUTERS];
-} ls_packet;
 
 /* Returns a routing entry for the node given */
 routing_entry_t* Router_GetRoutingEntryForNode( router_t* router, node_t routing_node );

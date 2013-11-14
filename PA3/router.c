@@ -207,7 +207,7 @@ void wait_for_neighbors( router_t* router ) {
 
 uint8_t packet_has_update(ls_packet *orig, ls_packet *incoming) {
 	//p1->
-
+	return 0;
 }
 
 uint8_t update_routing_table(router_t *router, ls_packet *packet) {
@@ -227,4 +227,5 @@ uint8_t update_routing_table(router_t *router, ls_packet *packet) {
 
 		}
 	}
+	return 0;
 }

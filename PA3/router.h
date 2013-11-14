@@ -56,7 +56,7 @@ typedef struct {
 	uint8_t num_entries;
 	uint8_t dest_id[MAX_NUM_ROUTERS];
 	uint8_t cost[MAX_NUM_ROUTERS];
-} routing_packet_t
+} routing_packet_t;
 
 int parse_router( uint8_t router_id, router_t* router, const char* filename );
 

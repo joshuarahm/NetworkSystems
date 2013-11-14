@@ -67,10 +67,11 @@ typedef struct {
     /* The array of destinations known about */
 	uint8_t         _m_num_destinations;
 	routing_entry_t _m_destinations[MAX_NUM_ROUTERS];
+
     /* This table contains indexes of the destinations according
      * to their IDs. So the routing_entry for A can be found
      * by doing _m_destinations[ _m_routing_table[ 'A' ] ] */
-    uint8_t _m_routing_table[ 255 ];
+    uint8_t    _m_routing_table[ 255 ];
 
     /* The array of neighbors */
 	uint8_t    _m_num_neighbors;
@@ -111,5 +112,7 @@ void serialize(const ls_packet *packet, uint8_t *outbuf);
 void deserialize(ls_packet *packet, const uint8_t *inbuf);
 
 uint8_t *create_packet(router_t *router, uint8_t should_close);
+
+void close_router( router_t *router );
 
 #endif /* ROUTER_H_ */

@@ -28,13 +28,13 @@ int try_connect( uint16_t port ) {
     serv_addr.sin_family = AF_INET;
     serv_addr.sin_port = htons(port); 
 
-    if(inet_pton(AF_INET, "localhost", &serv_addr.sin_addr)<=0) {
+    if(inet_pton(AF_INET, "127.0.0.1", &serv_addr.sin_addr)<=0) {
         printf("\n inet_pton error occured\n");
         return 0;
     } 
 
     if( connect(sockfd, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0) {
-       printf("\n Error : Connect Failed \n");
+       printf("Error: Connect failed on port %d\n", port);
        return 0;
     } 
 
@@ -77,7 +77,9 @@ int parse_router( uint8_t router_id, router_t* router, const char* filename ) {
 	/* The the cost as an int; we cant fill a byte
 	 * directly */
 	int cost;
-	memset( router, 0, sizeof( * router ) ); 
+	memset( router, 0, sizeof( router_t ) ); 
+    memset( &temp_entry, 0, sizeof( neighbor_t ) );
+    memset( &router->_m_routing_table, 0xFF, 255 ); 
 
 	router->_m_id = router_id;
 
@@ -173,11 +175,16 @@ neighbor_t* Router_GetNeighborForRoutingEntry( router_t* router, routing_entry_t
  * will set the sock_fd member of the neighbor
  * to the handle for communication with the neighbor */
 void* open_neighbor( neighbor_t* neighbor ) {
+    printf( "Trying to connect to: %c\n", neighbor->node_id );
     SOCKET fd = try_connect( neighbor->dest_tcp_port );
-    SOCKET serv = -1;;
+    SOCKET serv = -1;
+
     if( fd == 0 ) {
         /* The host was not up yet */
         fd = listen_connect( neighbor->outgoing_tcp_port, & serv );
+        printf( "Accepted connection from %c\n", neighbor->node_id );
+    } else {
+        printf( "Connected to %c\n", neighbor->node_id );
     }
 
     neighbor->sock_fd = fd;
@@ -200,5 +207,18 @@ void wait_for_neighbors( router_t* router ) {
 
     for( i = 0; i < nthreads; ++ i ) {
         pthread_join( threads[i], NULL );
+    }
+}
+
+void close_router( router_t* router ) {
+    int i;
+    for( i = 0 ; i < router->_m_num_neighbors; ++ i ) {
+        neighbor_t* neighbor = &router->_m_neighbors_table[i];
+
+        if( neighbor->serv_fd > 0 ) {
+            close( neighbor->serv_fd );
+        }
+
+        close( neighbor->sock_fd );
     }
 }

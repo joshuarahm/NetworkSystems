@@ -25,14 +25,30 @@ int main(int argc, char* argv[]) {
 	parse_router( argv[1][0], & router, "PA3_initialization.txt" );
 
 	/* Just print the entries for now */
-	printf( "Entries:\n" );
+	printf( "Neighbors:\n" );
 	for( i = 0 ; i < router._m_num_neighbors; ++ i ) {
 		neighbor_t* neighbor = & router._m_neighbors_table[i];
-		printf( "[neighbor node_id=%c outgoing_tcp_port=%d dest_tcp_port=%d cost=%d serv_fd=%d sock_fd=%d",
+		printf( "[neighbor node_id=%c outgoing_tcp_port=%d dest_tcp_port=%d cost=%d serv_fd=%d sock_fd=%d]",
 			neighbor->node_id, neighbor->outgoing_tcp_port, neighbor->dest_tcp_port,
 			neighbor->cost, neighbor->serv_fd, neighbor->sock_fd );
 		printf("\n");
 	}
+
+	printf( "Waiting For Neighbors ...\n" );
+	wait_for_neighbors( & router );
+
+	printf( "All Neighbors are Up!!!\n" );
+	printf( "Neighbors:\n" );
+	for( i = 0 ; i < router._m_num_neighbors; ++ i ) {
+		neighbor_t* neighbor = & router._m_neighbors_table[i];
+		printf( "[neighbor node_id=%c outgoing_tcp_port=%d dest_tcp_port=%d cost=%d serv_fd=%d sock_fd=%d]",
+			neighbor->node_id, neighbor->outgoing_tcp_port, neighbor->dest_tcp_port,
+			neighbor->cost, neighbor->serv_fd, neighbor->sock_fd );
+		printf("\n");
+	}
+
+	sleep( 7 );
+	close_router( & router );
 
 	return 0;
 }

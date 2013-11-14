@@ -11,6 +11,7 @@
 #include <stdio.h>
 
 typedef int SOCKET;
+typedef uint8_t node_t;
 
 /*
  * An entry in the routing table
@@ -23,15 +24,28 @@ typedef int SOCKET;
  * dest_tcp_port:     the port the other guy is listening to
  */
 typedef struct {
-	uint8_t dest_id;
-	uint8_t cost;
-	uint32_t seq_num;
+    /* The id of the destination, e.g. 'A', 'B' etc. */
+	node_t dest_id;
 
+    /* The index into the neighbors table of the 
+     * gateway to this destination */
+    uint8_t gateway_idx;
+
+    /* The total cost to get to the destination */
+	uint8_t cost;
+
+    /* The last seen sequence number from the
+     * destination */
+	uint32_t seq_num;
+} routing_entry_t;
+
+typedef struct {
 	uint16_t outgoing_tcp_port;
 	uint16_t dest_tcp_port;
+
     SOCKET   serv_fd;
     SOCKET   sock_fd;
-} routing_entry_t;
+} neighbor_t;
 
 #define MAX_NUM_ROUTERS 32
 #define LS_PACKET_OVERHEAD 6
@@ -43,10 +57,18 @@ typedef struct {
 typedef struct {
 	uint8_t         _m_id;
 	uint32_t		_m_seq_num;
-	uint8_t         _m_num_routers;
-	routing_entry_t _m_routing_table[MAX_NUM_ROUTERS];
+
+    /* The array of destinations known about */
+	uint8_t         _m_num_destinations;
+	routing_entry_t _m_destinations[MAX_NUM_ROUTERS];
+    /* This table contains indexes of the destinations according
+     * to their IDs. So the routing_entry for A can be found
+     * by doing _m_destinations[ _m_routing_table[ 'A' ] ] */
+    int _m_routing_table[ 255 ];
+
+    /* The array of neighbors */
 	uint8_t         _m_num_neighbors;
-	routing_entry_t _m_neighbors_table[MAX_NUM_ROUTERS];
+	neighbor_t _m_neighbors_table[MAX_NUM_ROUTERS];
 } router_t;
 
 
@@ -65,6 +87,8 @@ typedef struct {
 	uint8_t dest_id[MAX_NUM_ROUTERS];
 	uint8_t cost[MAX_NUM_ROUTERS];
 } ls_packet;
+
+routing_entry_t* Router_GetRoutingEntryForNode( node_t routing_node );
 
 /* Read a router and it's starting table from the file */
 int parse_router( uint8_t router_id, router_t* router, const char* filename );

@@ -132,13 +132,19 @@ void deserialize(ls_packet *packet, const uint8_t *inbuf) {
 	}
 }
 
-void create_packet(router_t *router, uint8_t should_close) {
+uint8_t *create_packet(router_t *router, uint8_t should_close) {
 	int i;
 	ls_packet tmp;
+	uint8_t *outbuf;
 	tmp.should_close = should_close;
 	tmp.num_entries = router->_m_num_neighbors;
 	tmp.seq_num = ++(router->_m_seq_num);
+	outbuf = malloc(LS_PACKET_OVERHEAD + 2*tmp.num_entries);
 	for (i = 0; i < tmp.num_entries; i++) {
 		tmp.dest_id[i] = router->_m_neighbors_table[i].dest_id;
 	}
+
+	serialize(&tmp, outbuf);
+
+	return outbuf;
 }

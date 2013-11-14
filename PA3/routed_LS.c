@@ -26,8 +26,8 @@ int main(int argc, char* argv[]) {
 
 	/* Just print the entries for now */
 	printf( "Entries:\n" );
-	for( i = 0 ; i < router._m_num_routers; ++ i ) {
-		print_entry( &router._m_routing_table[i] );
+	for( i = 0 ; i < router._m_num_neighbors; ++ i ) {
+		print_entry( &router._m_neighbors_table[i] );
 		printf("\n");
 	}
 

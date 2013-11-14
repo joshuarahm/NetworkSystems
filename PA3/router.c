@@ -223,6 +223,7 @@ void close_router( router_t* router ) {
 
         close( neighbor->sock_fd );
     }
+}
 
 uint8_t packet_has_update(ls_packet *orig, ls_packet *incoming) {
 	uint8_t i;

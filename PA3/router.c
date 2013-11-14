@@ -117,8 +117,8 @@ void serialize(const ls_packet *packet, uint8_t *outbuf) {
 	uint32_t *seq_num_ptr = (uint32_t*) outbuf+2;
 	*seq_num_ptr = htonl(packet->seq_num);
 	for (i = 0; i < packet->num_entries; i++) {
-		outbuf[(2*i)+6] = packet->dest_id[i];
-		outbuf[(2*i)+6+1] = packet->cost[i];
+		outbuf[(2*i)+LS_PACKET_OVERHEAD] = packet->dest_id[i];
+		outbuf[(2*i)+LS_PACKET_OVERHEAD+1] = packet->cost[i];
 	}
 }
 
@@ -129,20 +129,35 @@ void deserialize(ls_packet *packet, const uint8_t *inbuf) {
 	uint32_t *seq_num_ptr = (uint32_t*) inbuf+2;
 	*seq_num_ptr = htonl(packet->seq_num);
 	for (i = 0; i < packet->num_entries; i++) {
-		packet->dest_id[i] = inbuf[(2*i)+6];
-		packet->cost[i] = inbuf[(2*i)+6+1];
+		packet->dest_id[i] = inbuf[(2*i)+LS_PACKET_OVERHEAD];
+		packet->cost[i] = inbuf[(2*i)+LS_PACKET_OVERHEAD+1];
 	}
 }
 
-void create_packet(router_t *router, uint8_t should_close) {
+uint8_t *create_packet(router_t *router, uint8_t should_close) {
 	int i;
 	ls_packet tmp;
+	uint8_t *outbuf;
 	tmp.should_close = should_close;
 	tmp.num_entries = router->_m_num_neighbors;
 	tmp.seq_num = ++(router->_m_seq_num);
+	outbuf = malloc(LS_PACKET_OVERHEAD + 2*tmp.num_entries);
 	for (i = 0; i < tmp.num_entries; i++) {
 		tmp.dest_id[i] = router->_m_neighbors_table[i].dest_id;
 	}
+
+	serialize(&tmp, outbuf);
+
+	return outbuf;
+}
+
+int32_t get_routing_index(router_t *router, uint8_t id) {
+	int i;
+	for (i = 0; i < router->_m_num_routers; i++) {
+		if (router->_m_routing_table->dest_id == id)
+			return i;
+	}
+	return -1;
 }
 
 /* Try to connect to a neighbor. This function

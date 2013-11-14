@@ -34,6 +34,7 @@ typedef struct {
 } routing_entry_t;
 
 #define MAX_NUM_ROUTERS 32
+#define LS_PACKET_OVERHEAD 6
 /*
  * A struct that defines a router.
  *
@@ -75,6 +76,9 @@ void serialize(const ls_packet *packet, uint8_t *outbuf);
 
 void deserialize(ls_packet *packet, const uint8_t *inbuf);
 
-void create_packet(router_t *router, uint8_t should_close);
+uint8_t *create_packet(router_t *router, uint8_t should_close);
+
+/* Returns -1 when node id not found in routing table */
+int32_t get_routing_index(router_t *router, uint8_t id);
 
 #endif /* ROUTER_H_ */

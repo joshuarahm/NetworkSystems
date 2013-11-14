@@ -70,7 +70,7 @@ int listen_connect( uint16_t port, int* serv_fd ) {
 
 int parse_router( uint8_t router_id, router_t* router, const char* filename ) {
 	FILE* file = fopen( filename, "r" );
-	routing_entry_t temp_entry;
+	neighbor_t temp_entry;
 	char tmp_id;
 	int n_filled;
 	int line = 0;
@@ -87,7 +87,7 @@ int parse_router( uint8_t router_id, router_t* router, const char* filename ) {
 
 	while( ( n_filled = fscanf( file, "<%c,%hu,%c,%hu,%d>", & tmp_id,
 		& temp_entry.outgoing_tcp_port,
-		& temp_entry.dest_id,
+		& temp_entry.node_id,
 		& temp_entry.dest_tcp_port,
 		& cost ) ) != EOF ) {
 
@@ -103,7 +103,7 @@ int parse_router( uint8_t router_id, router_t* router, const char* filename ) {
 		if( tmp_id == router_id ) {
 			/* If this line is actually for this router we're configuring */
 			temp_entry.cost = (uint8_t) cost;
-			router->_m_neighbors_table[ router->_m_num_routers ++ ] = temp_entry;
+			router->_m_neighbors_table[ router->_m_num_neighbors ++ ] = temp_entry;
 		}
 	}
 	return 0;
@@ -143,7 +143,7 @@ uint8_t *create_packet(router_t *router, uint8_t should_close) {
 	tmp.seq_num = ++(router->_m_seq_num);
 	outbuf = malloc(LS_PACKET_OVERHEAD + 2*tmp.num_entries);
 	for (i = 0; i < tmp.num_entries; i++) {
-		tmp.dest_id[i] = router->_m_neighbors_table[i].dest_id;
+		tmp.dest_id[i] = router->_m_neighbors_table[i].node_id;
 	}
 
 	serialize(&tmp, outbuf);
@@ -151,19 +151,28 @@ uint8_t *create_packet(router_t *router, uint8_t should_close) {
 	return outbuf;
 }
 
-int32_t get_routing_index(router_t *router, uint8_t id) {
-	int i;
-	for (i = 0; i < router->_m_num_routers; i++) {
-		if (router->_m_routing_table->dest_id == id)
-			return i;
-	}
-	return -1;
+routing_entry_t* Router_GetRoutingEntryForNode( router_t* router, node_t routing_node ) {
+    int dest = router->_m_routing_table[ routing_node ];
+
+    if( dest > router->_m_num_destinations ) {
+        return NULL;
+    }
+
+    return & router->_m_destinations[ dest ];
+}
+
+neighbor_t* Router_GetNeighborForRoutingEntry( router_t* router, routing_entry_t* routing_entry ) {
+    if( routing_entry->gateway_idx > router->_m_num_neighbors ) {
+        return NULL;
+    }
+
+    return & router->_m_neighbors_table[ routing_entry->gateway_idx ];
 }
 
 /* Try to connect to a neighbor. This function
  * will set the sock_fd member of the neighbor
  * to the handle for communication with the neighbor */
-void* open_neighbor( routing_entry_t* neighbor ) {
+void* open_neighbor( neighbor_t* neighbor ) {
     SOCKET fd = try_connect( neighbor->dest_tcp_port );
     SOCKET serv = -1;;
     if( fd == 0 ) {

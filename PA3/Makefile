@@ -1,6 +1,6 @@
 CC=gcc
 CFLAGS:=-Wall -Wextra -Wno-unused-parameter -g3 -ggdb
-OBJS:=router.o logging.o
+OBJS:=router.o logging.o routed_LS.o
 LDFLAGS:=
 ROUTER:=routed_LS
 DEBUG?=0
@@ -8,8 +8,11 @@ DEBUGFLAGS=-DDEBUG$(DEBUG)
 
 all: routed_LS
 
-$(ROUTER): routed_LS.c $(OBJS)
-	$(CC) -o $@ $< $(OBJS) -lpthread
+$(ROUTER): $(OBJS)
+	$(CC) -o $@ $(OBJS) -lpthread
+
+routed_LS.o: routed_LS.c
+	$(CC) $(CFLAGS) -o$@ -c $< $(DEBUGFLAGS)
 
 router.o: router.c
 	$(CC) $(CFLAGS) -o$@ -c $< $(DEBUGFLAGS)

@@ -27,7 +27,10 @@ int main(int argc, char* argv[]) {
 	/* Just print the entries for now */
 	printf( "Entries:\n" );
 	for( i = 0 ; i < router._m_num_neighbors; ++ i ) {
-		print_entry( &router._m_neighbors_table[i] );
+		neighbor_t* neighbor = & router._m_neighbors_table[i];
+		printf( "[neighbor node_id=%c outgoing_tcp_port=%d dest_tcp_port=%d cost=%d serv_fd=%d sock_fd=%d",
+			neighbor->node_id, neighbor->outgoing_tcp_port, neighbor->dest_tcp_port,
+			neighbor->cost, neighbor->serv_fd, neighbor->sock_fd );
 		printf("\n");
 	}
 

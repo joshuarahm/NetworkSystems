@@ -5,6 +5,7 @@
 #include <sys/socket.h>
 
 #include "router.h"
+#include "logging.h"
 
 
 int main(int argc, char* argv[]) {
@@ -26,7 +27,7 @@ int main(int argc, char* argv[]) {
 	/* Just print the entries for now */
 	printf( "Entries:\n" );
 	for( i = 0 ; i < router._m_num_routers; ++ i ) {
-		print_entry( &router._m_table[i] );
+		print_entry( &router._m_routing_table[i] );
 		printf("\n");
 	}
 

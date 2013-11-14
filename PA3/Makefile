@@ -9,7 +9,7 @@ DEBUGFLAGS=-DDEBUG$(DEBUG)
 all: routed_LS
 
 $(ROUTER): routed_LS.c $(OBJS)
-	$(CC) -o $@ $< $(OBJS)
+	$(CC) -o $@ $< $(OBJS) -lpthread
 
 router.o: router.c
 	$(CC) $(CFLAGS) -o$@ -c $< $(DEBUGFLAGS)

@@ -29,6 +29,8 @@ typedef struct {
 
 	uint16_t outgoing_tcp_port;
 	uint16_t dest_tcp_port;
+    SOCKET   serv_fd;
+    SOCKET   sock_fd;
 } routing_entry_t;
 
 #define MAX_NUM_ROUTERS 32

@@ -12,6 +12,8 @@
 #include <sys/types.h>
 #include <time.h> 
 
+#include <pthread.h>
+
 int try_connect( uint16_t port ) {
 	int sockfd = 0;
     struct sockaddr_in serv_addr; 
@@ -141,4 +143,38 @@ void create_packet(router_t *router, uint8_t should_close) {
 	for (i = 0; i < tmp.num_entries; i++) {
 		tmp.dest_id[i] = router->_m_neighbors_table[i].dest_id;
 	}
+}
+
+/* Try to connect to a neighbor. This function
+ * will set the sock_fd member of the neighbor
+ * to the handle for communication with the neighbor */
+void* open_neighbor( routing_entry_t* neighbor ) {
+    SOCKET fd = try_connect( neighbor->dest_tcp_port );
+    SOCKET serv = -1;;
+    if( fd == 0 ) {
+        /* The host was not up yet */
+        fd = listen_connect( neighbor->outgoing_tcp_port, & serv );
+    }
+
+    neighbor->sock_fd = fd;
+    neighbor->serv_fd = serv;
+
+    pthread_exit( NULL );
+    return NULL;
+}
+
+void wait_for_neighbors( router_t* router ) {
+    pthread_t threads[ MAX_NUM_ROUTERS ];
+    size_t nthreads;
+    nthreads = router->_m_num_neighbors;
+    size_t i;
+
+    for( i = 0; i < nthreads; ++ i ) {
+        pthread_create( &threads[i], NULL, (void*(*)(void*))open_neighbor,
+            & router->_m_neighbors_table[i] );
+    }
+
+    for( i = 0; i < nthreads; ++ i ) {
+        pthread_join( threads[i], NULL );
+    }
 }

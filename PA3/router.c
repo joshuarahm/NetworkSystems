@@ -148,3 +148,12 @@ uint8_t *create_packet(router_t *router, uint8_t should_close) {
 
 	return outbuf;
 }
+
+int32_t get_routing_index(router_t *router, uint8_t id) {
+	int i;
+	for (i = 0; i < router->_m_num_routers; i++) {
+		if (router->_m_routing_table->dest_id == id)
+			return i;
+	}
+	return -1;
+}

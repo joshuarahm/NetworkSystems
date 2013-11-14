@@ -49,6 +49,10 @@ typedef struct {
 		(routing_entry)->outgoing_tcp_port, \
 		(routing_entry)->dest_tcp_port )
 
+/* Read a router and it's starting table from the file */
 int parse_router( uint8_t router_id, router_t* router, const char* filename );
+
+/* Wait for the neighbors to come online */
+void wait_for_neighbors( router_t* router );
 
 #endif /* ROUTER_H_ */

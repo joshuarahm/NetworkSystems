@@ -33,8 +33,14 @@ typedef struct {
     SOCKET   sock_fd;
 } routing_entry_t;
 
+typedef struct {
+	uint8_t num_routers;
+	uint8_t id[MAX_NUM_ROUTERS];
+	uint32_t distmap[256];
+} router_set_t;
+
 #define MAX_NUM_ROUTERS 32
-#define LS_PACKET_OVERHEAD 6
+#define LS_PACKET_OVERHEAD 7
 /*
  * A struct that defines a router.
  *
@@ -59,6 +65,7 @@ typedef struct {
  * cost[]: List of costs for the above destinations.
  */
 typedef struct {
+	uint8_t origin;
 	uint8_t should_close;
 	uint8_t num_entries;
 	uint32_t seq_num;
@@ -80,5 +87,7 @@ uint8_t *create_packet(router_t *router, uint8_t should_close);
 
 /* Returns -1 when node id not found in routing table */
 int32_t get_routing_index(router_t *router, uint8_t id);
+
+uint8_t update_routing_table(router_t *router, ls_packet *packet);
 
 #endif /* ROUTER_H_ */

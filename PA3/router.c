@@ -112,7 +112,7 @@ int parse_router( uint8_t router_id, router_t* router, const char* filename ) {
 }
 
 
-void serialize(const ls_packet *packet, uint8_t *outbuf) {
+void serialize(const ls_packet_t *packet, uint8_t *outbuf) {
 	int i;
 	outbuf[0] = packet->should_close;
 	outbuf[1] = packet->num_entries;
@@ -125,7 +125,7 @@ void serialize(const ls_packet *packet, uint8_t *outbuf) {
 	}
 }
 
-void deserialize(ls_packet *packet, const uint8_t *inbuf) {
+void deserialize(ls_packet_t *packet, const uint8_t *inbuf) {
 	int i;
 	packet->should_close = inbuf[0];
 	packet->num_entries = inbuf[1];
@@ -140,7 +140,7 @@ void deserialize(ls_packet *packet, const uint8_t *inbuf) {
 
 uint8_t *create_packet(router_t *router, uint8_t should_close) {
 	int i;
-	ls_packet tmp;
+	ls_packet_t tmp;
 	uint8_t *outbuf;
 	tmp.should_close = should_close;
 	tmp.num_entries = router->_m_num_neighbors;
@@ -225,7 +225,7 @@ void close_router( router_t* router ) {
     }
 }
 
-uint8_t packet_has_update(ls_packet *orig, ls_packet *incoming) {
+uint8_t packet_has_update(ls_packet_t *orig, ls_packet_t *incoming) {
 	uint8_t i;
 	//p1->
 	if (incoming->seq_num > orig->seq_num) {
@@ -243,27 +243,36 @@ uint8_t packet_has_update(ls_packet *orig, ls_packet *incoming) {
 	return 0; //Seq num was too old
 }
 
-uint8_t update_routing_table(router_t *router, ls_packet *packet) {
-	int curr_node_index;
-	routing_entry_t *old_entry;
+uint8_t set_has_node(ls_set_t *set, node_t nodeid) {
+	int i;
+	for (i=0; i < set->num_routers; i++) {
+		if (set->id[i] == nodeid)
+			return 1;
+	}
+	return 0;
+}
 
-	node_t min_node;
-	uint8_t cost = 255;
+uint8_t update_routing_table(router_t *router, ls_packet_t *packet) {
+	int curr_node_index;
+	routing_entry_t *old_entry, *new_entry;
 	
-	router_set_t current;
+	ls_set_t current;
 	if ((old_entry = Router_GetRoutingEntryForNode(router, packet->origin))) {
 		if (!packet_has_update(old_entry->packet, packet)) {
 			return 0;
+		} else {
+			//Update existing info
 		}
 	} else {
-		//TODO: Add packet to routing table
+		new_entry = &router->_m_destinations[router->_m_num_destinations++];
+		new_entry->dest_id = packet->origin;
+		new_entry->packet = malloc(sizeof(ls_packet_t));
 	}
 	//Packet must contain new info
 
 
 	current.num_routers = 1;
 	current.id[0] = router->_m_id;
-	for (int i=0;i<256;i++) current.distmap[i]=-1;
 	for (current.num_routers = 1; current.num_routers < router->_m_num_destinations+1; current.num_routers++) {
 		for (curr_node_index = 0; curr_node_index < current.num_routers; curr_node_index++) {
 			 if (current.id[curr_node_index] == router->_m_id) {

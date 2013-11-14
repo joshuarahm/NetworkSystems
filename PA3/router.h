@@ -31,7 +31,7 @@ typedef struct {
 	uint32_t seq_num;
 	uint8_t dest_id[MAX_NUM_ROUTERS];
 	uint8_t cost[MAX_NUM_ROUTERS];
-} ls_packet;
+} ls_packet_t;
 
 /*
  * An entry in the routing table
@@ -55,7 +55,7 @@ typedef struct {
 	uint8_t cost;
 
 	/* The last packet we have seen that originated from dest_id */
-	ls_packet *packet;
+	ls_packet_t *packet;
 } routing_entry_t;
 
 typedef struct {
@@ -75,8 +75,13 @@ typedef struct {
 typedef struct {
 	uint8_t num_routers;
 	uint8_t id[MAX_NUM_ROUTERS];
-	uint32_t distmap[256];
-} router_set_t;
+} ls_set_t;
+
+typedef struct {
+	uint8_t src;
+	uint8_t dest;
+	uint8_t cost;
+} ls_link_t;
 
 /*
  * A struct that defines a router.
@@ -114,17 +119,19 @@ int parse_router( uint8_t router_id, router_t* router, const char* filename );
 /* Wait for the neighbors to come online */
 void wait_for_neighbors( router_t* router );
 
-void serialize(const ls_packet *packet, uint8_t *outbuf);
+void serialize(const ls_packet_t *packet, uint8_t *outbuf);
 
-void deserialize(ls_packet *packet, const uint8_t *inbuf);
+void deserialize(ls_packet_t *packet, const uint8_t *inbuf);
 
 uint8_t *create_packet(router_t *router, uint8_t should_close);
 
 void close_router( router_t *router );
 
-uint8_t packet_has_update(ls_packet *orig, ls_packet *incoming);
+uint8_t packet_has_update(ls_packet_t *orig, ls_packet_t *incoming);
+
+uint8_t set_has_node(ls_set_t *set, node_t nodeid);
 
 /* Returns 1 if an actual update occurred. */
-uint8_t update_routing_table(router_t *router, ls_packet *incoming);
+uint8_t update_routing_table(router_t *router, ls_packet_t *incoming);
 
 #endif /* ROUTER_H_ */

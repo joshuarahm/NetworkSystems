@@ -196,10 +196,26 @@ void wait_for_neighbors( router_t* router ) {
     }
 }
 
+uint8_t packet_has_update(ls_packet *orig, ls_packet *incoming) {
+	//p1->
+
+}
+
 uint8_t update_routing_table(router_t *router, ls_packet *packet) {
+	int curr_node_index;
+
+	node_t min_node;
+	uint8_t cost;
+
 	router_set_t current;
 	current.num_routers = 1;
 	current.id[0] = router->_m_id;
 	for (int i=0;i<256;i++) current.distmap[i]=-1;
+	for (current.num_routers = 1; current.num_routers < router->_m_num_destinations; current.num_routers++) {
+		for (curr_node_index = 0; curr_node_index < current.num_routers; curr_node_index++) {
+			 //if (current.
 
+
+		}
+	}
 }

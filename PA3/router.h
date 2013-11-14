@@ -34,9 +34,8 @@ typedef struct {
     /* The total cost to get to the destination */
 	uint8_t cost;
 
-    /* The last seen sequence number from the
-     * destination */
-	uint32_t seq_num;
+	/* The last packet we have seen that originated from dest_id */
+	ls_packet *packet;
 } routing_entry_t;
 
 typedef struct {
@@ -112,6 +111,8 @@ uint8_t *create_packet(router_t *router, uint8_t should_close);
 /* Returns -1 when node id not found in routing table */
 int32_t get_routing_index(router_t *router, uint8_t id);
 
-uint8_t update_routing_table(router_t *router, ls_packet *packet);
+uint8_t packet_has_update(ls_packet *orig, ls_packet *new);
+
+uint8_t update_routing_table(router_t *router, ls_packet *incoming);
 
 #endif /* ROUTER_H_ */

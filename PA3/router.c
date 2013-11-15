@@ -111,6 +111,7 @@ void Router_Main( router_t* router ) {
                     debug1( "fd %d in set; reading packet\n", fd );
                     if( read_packet( fd, &packet, router ) < 0 ) {
                         debug1( "No data ready to read from socket WTF?!?!\n" );
+                        close_router( router );
                         exit( 2 );
                     }
                 }

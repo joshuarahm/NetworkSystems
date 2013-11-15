@@ -17,6 +17,14 @@
 
 #include <pthread.h>
 #include <sys/select.h>
+#include <sys/time.h>
+
+uint64_t getCurrentTimeMillis() {
+    struct timeval tp;
+    gettimeofday(&tp, NULL);
+    uint64_t ms = tp.tv_sec * 1000 + tp.tv_usec / 1000;
+    return ms;
+}
 
 int read_packet( int fd, ls_packet_t* packet, router_t* router ) {
     uint8_t input[255];
@@ -66,6 +74,8 @@ void Router_Main( router_t* router ) {
     int rv;
     int max_fd = 0;
 
+    uint64_t last_broadcast = getCurrentTimeMillis();
+    uint64_t current_time;
     while( 1 ) {
         FD_ZERO( &select_set );
         for( i = 0; i < router->_m_num_neighbors; ++ i ) {
@@ -81,10 +91,14 @@ void Router_Main( router_t* router ) {
         timeout.tv_usec = 500000;
         rv = select( max_fd + 1, & select_set, NULL, NULL, &timeout );
 
-        if( rv == 0 ) {
-            debug1( "Select() timed out, sending packet\n" );
+        current_time = getCurrentTimeMillis();
+        if( current_time - last_broadcast > 5000 ) {
+            last_broadcast = current_time;
+            debug1( "Periodic packet sending\n" );
             broadcast_packet( router );
-        } else {
+        }
+        
+        if( rv > 0 ) {
     
             debug1( "Select() returned %d sockets ready for read\n", rv );
             for( i = 0; i < router->_m_num_neighbors; ++ i ) {

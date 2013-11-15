@@ -60,6 +60,7 @@ int main(int argc, char* argv[]) {
 		printf("\n");
 	}
 
+    Router_Main( & router );
 	sleep( 1000 );
     m_exit();
 

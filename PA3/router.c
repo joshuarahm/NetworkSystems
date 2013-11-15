@@ -36,10 +36,17 @@ void read_packet( int fd, ls_packet_t* packet, router_t* router ) {
     }
 }
 
+void broadcast_packet( router_t* router ) {
+    uint8_t outbuf[255];
+    uint8_t size = create_packet( router, 0, outbuf );
+    int i;
+    for( i = 0; i < router->_m_num_neighbors; ++ i ) {
+        write( router->_m_neighbors_table[i].sock_fd, outbuf, size );
+    }
+}
+
 void Router_Main( router_t* router ) {
     struct timeval timeout;
-    timeout.tv_sec = 5;
-    timeout.tv_usec = 500000;
 
     fd_set select_set;
     ls_packet_t packet;
@@ -54,18 +61,26 @@ void Router_Main( router_t* router ) {
             FD_SET( router->_m_neighbors_table[i].sock_fd, &select_set );
         }
         
+        timeout.tv_sec = 5;
+        timeout.tv_usec = 500000;
         rv = select( router->_m_num_neighbors, & select_set, NULL, NULL, &timeout );
 
         if( rv == 0 ) {
+            debug1( "Select() timed out, sending packet\n" );
+            broadcast_packet( router );
+        } else {
+    
+            debug1( "Select() returned %d sockets ready for read\n", rv );
+            for( i = 0; i < router->_m_num_neighbors; ++ i ) {
+                fd = router->_m_neighbors_table[i].sock_fd;
 
-        }
-
-        for( i = 0; i < router->_m_num_neighbors; ++ i ) {
-            fd = router->_m_neighbors_table[i].sock_fd;
-            if( FD_ISSET( fd, &select_set ) ) {
-                read_packet( fd, &packet, router );
-                update_routing_table( router, &packet );
+                if( FD_ISSET( fd, &select_set ) ) {
+                    debug1( "fd %d in set; reading packet\n", fd );
+                    read_packet( fd, &packet, router );
+                    update_routing_table( router, &packet );
+                }
             }
+    
         }
     }
 }

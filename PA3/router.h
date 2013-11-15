@@ -11,7 +11,7 @@
 #include <stdio.h>
 
 #define MAX_NUM_ROUTERS 32
-#define LS_PACKET_OVERHEAD 8
+#define LS_PACKET_OVERHEAD 7
 
 typedef int SOCKET;
 typedef uint8_t node_t;
@@ -148,7 +148,7 @@ void rebuild_routing_table(router_t *router);
 void set_shortest_neighbor(router_t *router, ls_link_t *shortest, uint8_t neighbor_idx);
 
 /* Use only for checking distance from a non-self router to some other router */
-void set_shortest_distant(router_t *router, ls_link_t *shortest, node_t src, uint8_t router_idx);
+void set_shortest_distant(router_t *router, ls_link_t *shortest, node_t src, ls_packet_t *packet, uint8_t router_idx);
 
 void set_shortest(ls_link_t *shortest, node_t src, node_t dest, uint16_t total_cost); 
 

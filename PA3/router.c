@@ -441,11 +441,14 @@ void set_shortest_neighbor(router_t *router, ls_link_t *shortest, uint8_t neighb
 	set_shortest(shortest, src, dest, node_cost);
 }
 
-void set_shortest_distant(router_t *router, ls_link_t *shortest, node_t src, uint8_t router_idx) {
-	int16_t node_cost = router->_m_destinations[router_idx].cost;
+void set_shortest_distant(router_t *router, ls_link_t *shortest, node_t src, ls_packet_t *packet, uint8_t router_idx) {
+	//int16_t node_cost = router->_m_destinations[router_idx].cost;
+	int16_t node_cost = packet->cost[router_idx];
+
 	if (node_cost == -1)
 		return;
-	node_t dest = router->_m_destinations[router_idx].dest_id;
+	//node_t dest = router->_m_destinations[router_idx].dest_id;
+	node_t dest = packet->dest_id[router_idx];
 	node_cost += Router_GetRoutingEntryForNode(router, src)->cost;
 	set_shortest(shortest, src, dest, node_cost);
 }
@@ -468,13 +471,12 @@ uint8_t update_routing_table(router_t *router, ls_packet_t *packet) {
 
 		if (packet_has_update(entry->packet, packet) ) {
 			entry = Router_GetRoutingEntryForNode(router, packet->origin);
-			memcpy(entry->packet, packet, sizeof(*packet));
-			for (i=0; i < packet->num_entries;i++) {
-				entry->packet->dest_id[i]=packet->dest_id[i];
-				entry->packet->cost[i]=packet->cost[i];
-			}
-			//memcpy(&entry->packet->dest_id, &packet->dest_id, MAX_NUM_ROUTERS);
-			//memcpy(entry->packet->cost, packet->cost, MAX_NUM_ROUTERS);
+			memcpy(entry->packet, packet, sizeof(ls_packet_t));
+			memcpy(entry->packet->dest_id, packet->dest_id, MAX_NUM_ROUTERS);
+			memcpy(entry->packet->cost, packet->cost, MAX_NUM_ROUTERS);
+			debug4("Neighbors for added packet:\n");
+			for (i=0; i < entry->packet->num_entries; i++)
+				debug4("Dest id: %d, cost: %d\n", entry->packet->dest_id[i], entry->packet->cost[i]);
 			debug3("Processed packet with replacement information, nodeid = %d\n", packet->origin);
 		} else {
 			debug3("Processed packet with no useful information, discarding, nodeid = %d\n", packet->origin);
@@ -485,14 +487,13 @@ uint8_t update_routing_table(router_t *router, ls_packet_t *packet) {
 		entry = &router->_m_destinations[router->_m_num_destinations++];
 		entry->dest_id = packet->origin;
 		entry->packet = malloc(sizeof(ls_packet_t));
+		debug4("malloc'd %d bytes.\n", sizeof(ls_packet_t));
 		entry->cost = -1;
 		memcpy(entry->packet, packet, sizeof(ls_packet_t));
-		for (i=0; i < packet->num_entries;i++) {
-			entry->packet->dest_id[i]=packet->dest_id[i];
-			entry->packet->cost[i]=packet->cost[i];
-		}
-		//memcpy(entry->packet->dest_id, packet->dest_id, MAX_NUM_ROUTERS);
-		//memcpy(entry->packet->cost, packet->cost, MAX_NUM_ROUTERS);
+		memcpy(entry->packet->dest_id, packet->dest_id, MAX_NUM_ROUTERS);
+		memcpy(entry->packet->cost, packet->cost, MAX_NUM_ROUTERS);
+		for (i=0; i < entry->packet->num_entries; i++)
+			debug4("Dest id: %d, cost: %d\n", entry->packet->dest_id[i], entry->packet->cost[i]);
 		rebuild_routing_table(router);
 	}
 
@@ -521,9 +522,9 @@ uint8_t update_routing_table(router_t *router, ls_packet_t *packet) {
 					//Check neighbors from routing entry in the routing table
 					//entry = Router_GetRoutingEntryForNode(router, current.id[node_index]);
 					for (curr_neighbor = 0; curr_neighbor < entry->packet->num_entries; curr_neighbor++) { //For current node's neighbors 
-						debug4("neighbor id: %d\n", router->_m_destinations[curr_neighbor].dest_id);
-						if (!set_has_node(&current, router->_m_destinations[curr_neighbor].dest_id))
-							set_shortest_distant(router, &shortest, current.id[node_index], curr_neighbor);
+						debug4("neighbor id: %d\n", entry->packet->dest_id[curr_neighbor]);
+						if (!set_has_node(&current, entry->packet->dest_id[curr_neighbor]))
+							set_shortest_distant(router, &shortest, current.id[node_index], entry->packet, curr_neighbor);
 					}
 				} else {
 					debug3("Skipped parsing neighbors for an entry that does not have a packet stored: %d.\n", current.id[node_index]);
@@ -536,7 +537,6 @@ uint8_t update_routing_table(router_t *router, ls_packet_t *packet) {
 			return 1;
 		}
 		current.id[current.num_routers++] = shortest.dest;
-		debug4("%d : %d\n", shortest.dest, shortest.cost);
 		entry = Router_GetRoutingEntryForNode(router, shortest.dest);
 		if (!entry) {
 			debug3("Algorithm added new packet to destinations, nodeid = %d\n", packet->origin);

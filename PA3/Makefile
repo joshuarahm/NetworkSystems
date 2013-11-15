@@ -33,5 +33,5 @@ logging.o: logging.c
 #	$(CC) $(CFLAGS) $(DEBUGFLAGS) -o $@ -c $<
 
 clean:
-	- rm -rf *.o $(ROUTER)
+	- rm -rf *.o $(ROUTER) $(TEST)
 	- rm -rf routed_LS.dSYM/

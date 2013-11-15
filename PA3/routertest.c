@@ -23,6 +23,17 @@ void packet_update_test() {
 	debug3("Completed packet update tests successfully!\n");
 }
 
+void routing_update_test() {
+	router_t router;
+	
+	router._m_id = 'C';
+	router._m_seq_num = 0;
+
+	router._m_num_destinations = 5;
+	//router._m_destinations[0]
+
+}
+
 int main(int argc, char* argv[]) {
 	packet_update_test();
 }

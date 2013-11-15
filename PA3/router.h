@@ -119,12 +119,12 @@ int parse_router( uint8_t router_id, router_t* router, const char* filename );
 /* Wait for the neighbors to come online */
 void wait_for_neighbors( router_t* router );
 
-void serialize(const ls_packet_t *packet, uint8_t *outbuf);
+uint8_t serialize(const ls_packet_t *packet, uint8_t *outbuf);
 
 void deserialize(ls_packet_t *packet, const uint8_t *inbuf);
 
 /* Creates an LS packet from the router's current neighbors. */
-uint8_t *create_packet(router_t *router, uint8_t should_close);
+uint8_t create_packet(router_t *router, uint8_t should_close, uint8_t *outbuf);
 
 void close_router( router_t *router );
 
@@ -138,7 +138,17 @@ uint8_t set_has_node(const ls_set_t *set, const node_t nodeid);
 uint8_t get_neighbor_idx(router_t *router, const node_t nodeid);
 
 /* Given a link ( X->Y, 5) determine what the gateway_idx will be */
-uint8_t get_gateway_index(router_t *router, const ls_link_t *dest);
+uint8_t get_gateway_idx(router_t *router, const ls_link_t *dest);
+
+void rebuild_routing_table(router_t *router);
+
+/* Use only for check distance from self to an immediate neighbor */
+void set_shortest_neighbor(router_t *router, ls_link_t *shortest, uint8_t neighbor_idx);
+
+/* Use only for checking distance from a non-self router to some other router */
+void set_shortest_distant(router_t *router, ls_link_t *shortest, node_t src, uint8_t router_idx);
+
+void set_shortest(ls_link_t *shortest, node_t src, node_t dest, uint16_t total_cost); 
 
 /* Returns 1 if an actual update occurred. */
 uint8_t update_routing_table(router_t *router, ls_packet_t *incoming);

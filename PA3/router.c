@@ -121,7 +121,7 @@ int parse_router( uint8_t router_id, router_t* router, const char* filename ) {
 }
 
 
-void serialize(const ls_packet_t *packet, uint8_t *outbuf) {
+uint8_t serialize(const ls_packet_t *packet, uint8_t *outbuf) {
 	int i;
 	outbuf[0] = packet->should_close;
 	outbuf[1] = packet->num_entries;
@@ -132,6 +132,7 @@ void serialize(const ls_packet_t *packet, uint8_t *outbuf) {
 		outbuf[(2*i)+LS_PACKET_OVERHEAD] = packet->dest_id[i];
 		outbuf[(2*i)+LS_PACKET_OVERHEAD+1] = packet->cost[i];
 	}
+	return LS_PACKET_OVERHEAD + 2*(packet->num_entries);
 }
 
 void deserialize(ls_packet_t *packet, const uint8_t *inbuf) {
@@ -147,21 +148,17 @@ void deserialize(ls_packet_t *packet, const uint8_t *inbuf) {
 	}
 }
 
-uint8_t *create_packet(router_t *router, uint8_t should_close) {
+uint8_t create_packet(router_t *router, uint8_t should_close, uint8_t *outbuf) {
 	int i;
 	ls_packet_t tmp;
-	uint8_t *outbuf;
 	tmp.should_close = should_close;
 	tmp.num_entries = router->_m_num_neighbors;
 	tmp.seq_num = ++(router->_m_seq_num);
-	outbuf = malloc(LS_PACKET_OVERHEAD + 2*tmp.num_entries);
 	for (i = 0; i < tmp.num_entries; i++) {
 		tmp.dest_id[i] = router->_m_neighbors_table[i].node_id;
 	}
 
-	serialize(&tmp, outbuf);
-
-	return outbuf;
+	return serialize(&tmp, outbuf);
 }
 
 routing_entry_t* Router_GetRoutingEntryForNode( router_t* router, const node_t routing_node ) {
@@ -276,7 +273,7 @@ uint8_t get_neighbor_idx(router_t *router, const node_t nodeid) {
 	return 255;
 }
 
-uint8_t get_gateway_index(router_t *router, const ls_link_t *dest) {
+uint8_t get_gateway_idx(router_t *router, const ls_link_t *dest) {
 	if (dest->src == router->_m_id) {
 		//src is us, dest must be immediate neighbor
 		return get_neighbor_idx(router, dest->dest);
@@ -284,6 +281,46 @@ uint8_t get_gateway_index(router_t *router, const ls_link_t *dest) {
 		//src is not us, use src to index into routing table and return src's gateway_idx
 		return Router_GetRoutingEntryForNode(router, dest->src)->gateway_idx;
 	}
+}
+
+void rebuild_routing_table(router_t *router) {
+	int i;
+	routing_entry_t entry;
+	memset(router->_m_routing_table, 0xFF, 255);
+	for (i=0; i < router->_m_num_destinations; i++) {
+		entry = router->_m_destinations[i];
+		router->_m_routing_table[entry.dest_id] = i;
+	}
+}
+
+void set_shortest(ls_link_t *shortest, node_t src, node_t dest, uint16_t total_cost) {
+	if (shortest->cost == -1) {
+		shortest->src = src;
+		shortest->dest = dest;
+		shortest->cost = total_cost;
+	} else {
+		if (total_cost < shortest->cost ||
+				(total_cost == shortest->cost && src < shortest->src) ||
+				(total_cost == shortest->cost && src == shortest->src && dest < shortest->dest) ) {
+			shortest->src = src;
+			shortest->dest = dest;
+			shortest->cost = total_cost;
+		}
+	}
+}
+
+void set_shortest_neighbor(router_t *router, ls_link_t *shortest, uint8_t neighbor_idx) {
+	uint16_t node_cost = router->_m_neighbors_table[neighbor_idx].cost;
+	node_t dest = router->_m_neighbors_table[neighbor_idx].node_id;
+	node_t src = router->_m_id;
+	set_shortest(shortest, src, dest, node_cost);
+}
+
+void set_shortest_distant(router_t *router, ls_link_t *shortest, node_t src, uint8_t router_idx) {
+	uint16_t node_cost = Router_GetRoutingEntryForNode(router, src)->cost;
+	node_t dest = router->_m_destinations[router_idx].dest_id;
+	node_cost += router->_m_destinations[router_idx].cost;
+	set_shortest(shortest, src, dest, node_cost);
 }
 
 uint8_t update_routing_table(router_t *router, ls_packet_t *packet) {
@@ -309,6 +346,7 @@ uint8_t update_routing_table(router_t *router, ls_packet_t *packet) {
 		entry->dest_id = packet->origin;
 		entry->packet = malloc(sizeof(ls_packet_t));
 		memcpy(entry->packet, packet, sizeof(ls_packet_t));
+		rebuild_routing_table(router);
 	}
 
 	//Update routing table
@@ -322,23 +360,30 @@ uint8_t update_routing_table(router_t *router, ls_packet_t *packet) {
 		for (node_index = 0; node_index < current.num_routers; node_index++) { //Iterate through current set
 			if (current.id[node_index] == router->_m_id) {
 				//Check neighbors from the neighbors table
-				for (curr_neighbor = 0; curr_neighbor < router->_m_num_neighbors; curr_neighbor++) {
-					if (shortest.cost == -1) {
-						shortest.src = router->_m_id;
-						shortest.dest = router->_m_neighbors_table[curr_neighbor].node_id;
-						shortest.cost = router->_m_neighbors_table[curr_neighbor].cost;
-					} else {
-					}
-				}
+				for (curr_neighbor = 0; curr_neighbor < router->_m_num_neighbors; curr_neighbor++)
+					set_shortest_neighbor(router, &shortest, curr_neighbor);
 			} else {
-				//Check neighbors from routing entry in the routing table
-				entry = Router_GetRoutingEntryForNode(router, current.id[node_index]);
-				for (curr_neighbor = 0; curr_neighbor < entry->packet->num_entries; curr_neighbor++) { //For current node's neighbors
-					if (shortest.cost == -1) {
-						//shortest.src 
-					}
+				if (entry->packet) {
+					//Check neighbors from routing entry in the routing table
+					entry = Router_GetRoutingEntryForNode(router, current.id[node_index]);
+					for (curr_neighbor = 0; curr_neighbor < entry->packet->num_entries; curr_neighbor++) //For current node's neighbors
+						set_shortest_distant(router, &shortest, current.id[node_index], curr_neighbor);
+				} else {
+						debug3("Skipped parsing neighbors for an entry that does not have a packet stored: %c.\n", entry->dest_id);
 				}
 			}
+		}
+
+
+		current.id[current.num_routers++] = shortest.dest;
+		entry = Router_GetRoutingEntryForNode(router, shortest.dest);
+		//TODO: Add routing info
+		if (entry) {
+			entry->gateway_idx = get_gateway_idx(router, &shortest);
+			entry->cost = shortest.cost;
+		} else {
+			
+			//Add entry into destinations
 		}
 	}
 	return 0;

@@ -453,8 +453,12 @@ uint8_t update_routing_table(router_t *router, ls_packet_t *packet) {
 	
 	ls_set_t current;
 	assert(packet);
+	if (packet->origin == router->_m_id) {
+		debug3("Processed packet from self, discarding.\n");
+		return 0;
+	}
 	if ((entry = Router_GetRoutingEntryForNode(router, packet->origin)) && (entry->packet)) {
-		if (packet_has_update(entry->packet, packet) && packet->origin != router->_m_id) {
+		if (packet_has_update(entry->packet, packet) ) {
 			entry = Router_GetRoutingEntryForNode(router, packet->origin);
 			memcpy(entry->packet, packet, sizeof(ls_packet_t));
 			debug3("Processed packet with replacement information, nodeid = %d\n", packet->origin);
@@ -479,6 +483,7 @@ uint8_t update_routing_table(router_t *router, ls_packet_t *packet) {
 	   To determine which node to add, iterate through ever node in the current set and
 	   find the link with the lowest cost. */
 	while (current.num_routers < router->_m_num_destinations) { //Until all dests processed
+		shortest.cost=-1;
 		for (node_index = 0; node_index < current.num_routers; node_index++) { //Iterate through current set
 			if (current.id[node_index] == router->_m_id) {
 				//Check neighbors from the neighbors table

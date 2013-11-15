@@ -378,13 +378,15 @@ uint8_t update_routing_table(router_t *router, ls_packet_t *packet) {
 		current.id[current.num_routers++] = shortest.dest;
 		entry = Router_GetRoutingEntryForNode(router, shortest.dest);
 		//TODO: Add routing info
-		if (entry) {
-			entry->gateway_idx = get_gateway_idx(router, &shortest);
-			entry->cost = shortest.cost;
-		} else {
-			
+		if (!entry) {
 			//Add entry into destinations
+			entry = &router->_m_destinations[router->_m_num_destinations++];
+			entry->dest_id = shortest.dest;
+			entry->packet = NULL;
+			rebuild_routing_table(router);
 		}
+		entry->gateway_idx = get_gateway_idx(router, &shortest);
+		entry->cost = shortest.cost;
 	}
 	return 0;
 }

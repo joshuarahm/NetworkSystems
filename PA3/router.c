@@ -55,6 +55,7 @@ int read_packet( int fd, ls_packet_t* packet, router_t* router ) {
 
 void broadcast_packet( router_t* router ) {
     uint8_t outbuf[255];
+	memset(outbuf, 0x00, 255);
     uint8_t size = create_packet( router, 0, outbuf + 1 );
     outbuf[0] = size;
     int i;
@@ -261,6 +262,7 @@ uint8_t create_packet(router_t *router, uint8_t should_close, uint8_t *outbuf) {
 
 	for (i = 0; i < tmp.num_entries; i++) {
 		tmp.dest_id[i] = router->_m_neighbors_table[i].node_id;
+		tmp.cost[i] = router->_m_neighbors_table[i].cost;
 	}
 
 	return serialize(&tmp, outbuf);

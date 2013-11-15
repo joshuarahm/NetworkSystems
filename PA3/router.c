@@ -63,8 +63,15 @@ int listen_connect( uint16_t port, int* serv_fd ) {
     serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
     serv_addr.sin_port = htons(port); 
 
-    bind(listen_fd, (struct sockaddr*)&serv_addr, sizeof(serv_addr)); 
-    listen(listen_fd, 1); 
+    if( bind(listen_fd, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) ) {
+        perror( "Error on bind" );
+        return -1;
+    }
+
+    if( listen(listen_fd, 1) ) {
+        perror( "Error on listen\n" );
+        return -1;
+    }
 
     *serv_fd = listen_fd;
     return accept(listen_fd, (struct sockaddr*)NULL, NULL); 
@@ -219,11 +226,15 @@ void close_router( router_t* router ) {
     for( i = 0 ; i < router->_m_num_neighbors; ++ i ) {
         neighbor_t* neighbor = &router->_m_neighbors_table[i];
 
-        if( neighbor->serv_fd > 0 ) {
-            close( neighbor->serv_fd );
+        if( close( neighbor->sock_fd ) ) {
+            perror( "Error on close" );
         }
 
-        close( neighbor->sock_fd );
+        if( neighbor->serv_fd > 0 ) {
+            if( close( neighbor->serv_fd ) ) {
+                perror( "Error on close" );
+            }
+        }
     }
 }
 

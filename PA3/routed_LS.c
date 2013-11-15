@@ -6,7 +6,19 @@
 
 #include "router.h"
 #include "logging.h"
+#include <signal.h>
 
+router_t router;
+int m_exit( ) {
+    printf( "Closing router\n" );
+    close_router( &router );   
+    return 0;
+}
+
+void sighandler( int sig ) {
+    m_exit();
+    exit(0);
+}
 
 int main(int argc, char* argv[]) {
 	int i;
@@ -21,7 +33,6 @@ int main(int argc, char* argv[]) {
 		return -1;
 	}
 
-	router_t router;
 	parse_router( argv[1][0], & router, "PA3_initialization.txt" );
 
 	/* Just print the entries for now */
@@ -33,6 +44,8 @@ int main(int argc, char* argv[]) {
 			neighbor->cost, neighbor->serv_fd, neighbor->sock_fd );
 		printf("\n");
 	}
+
+    signal( SIGINT, sighandler );
 
 	printf( "Waiting For Neighbors ...\n" );
 	wait_for_neighbors( & router );
@@ -47,8 +60,8 @@ int main(int argc, char* argv[]) {
 		printf("\n");
 	}
 
-	sleep( 7 );
-	close_router( & router );
+	sleep( 1000 );
+    m_exit();
 
 	return 0;
 }

@@ -237,7 +237,7 @@ uint8_t create_packet(router_t *router, uint8_t should_close, uint8_t *outbuf) {
 	tmp.should_close = should_close;
 	tmp.num_entries = router->_m_num_neighbors;
 	tmp.seq_num = ++(router->_m_seq_num);
-	debug4("New: should_close: %d, num_entries: %d, origin: %c\n", packet->should_close, packet->num_entries, packet->origin);
+	debug4("New: should_close: %d, num_entries: %d, origin: %c\n", tmp.should_close, tmp.num_entries, tmp.origin);
 
 	for (i = 0; i < tmp.num_entries; i++) {
 		tmp.dest_id[i] = router->_m_neighbors_table[i].node_id;

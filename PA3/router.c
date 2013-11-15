@@ -50,6 +50,7 @@ void broadcast_packet( router_t* router ) {
     uint8_t size = create_packet( router, 0, outbuf + 1 );
     outbuf[0] = size;
     int i;
+	debug4("broadcast %d bytes.\n", size);
     for( i = 0; i < router->_m_num_neighbors; ++ i ) {
         write( router->_m_neighbors_table[i].sock_fd, outbuf, size + 1 );
     }

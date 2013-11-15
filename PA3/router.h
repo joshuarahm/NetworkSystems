@@ -52,7 +52,7 @@ typedef struct {
     uint8_t gateway_idx;
 
     /* The total cost to get to the destination */
-	uint8_t cost;
+	int16_t cost;
 
 	/* The last packet we have seen that originated from dest_id */
 	ls_packet_t *packet;

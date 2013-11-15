@@ -451,7 +451,7 @@ void set_shortest_distant(router_t *router, ls_link_t *shortest, node_t src, uin
 }
 
 uint8_t update_routing_table(router_t *router, ls_packet_t *packet) {
-	int curr_neighbor, node_index;
+	int curr_neighbor, node_index, i;
 	routing_entry_t *entry;
 	ls_link_t shortest;
 	shortest.cost=-1;
@@ -469,6 +469,10 @@ uint8_t update_routing_table(router_t *router, ls_packet_t *packet) {
 		if (packet_has_update(entry->packet, packet) ) {
 			entry = Router_GetRoutingEntryForNode(router, packet->origin);
 			memcpy(entry->packet, packet, sizeof(*packet));
+			for (i=0; i < packet->num_entries;i++) {
+				entry->packet->dest_id[i]=packet->dest_id[i];
+				entry->packet->cost[i]=packet->cost[i];
+			}
 			//memcpy(&entry->packet->dest_id, &packet->dest_id, MAX_NUM_ROUTERS);
 			//memcpy(entry->packet->cost, packet->cost, MAX_NUM_ROUTERS);
 			debug3("Processed packet with replacement information, nodeid = %d\n", packet->origin);
@@ -483,8 +487,12 @@ uint8_t update_routing_table(router_t *router, ls_packet_t *packet) {
 		entry->packet = malloc(sizeof(ls_packet_t));
 		entry->cost = -1;
 		memcpy(entry->packet, packet, sizeof(ls_packet_t));
-		memcpy(entry->packet->dest_id, packet->dest_id, MAX_NUM_ROUTERS);
-		memcpy(entry->packet->cost, packet->cost, MAX_NUM_ROUTERS);
+		for (i=0; i < packet->num_entries;i++) {
+			entry->packet->dest_id[i]=packet->dest_id[i];
+			entry->packet->cost[i]=packet->cost[i];
+		}
+		//memcpy(entry->packet->dest_id, packet->dest_id, MAX_NUM_ROUTERS);
+		//memcpy(entry->packet->cost, packet->cost, MAX_NUM_ROUTERS);
 		rebuild_routing_table(router);
 	}
 

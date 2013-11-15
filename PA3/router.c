@@ -53,17 +53,22 @@ void Router_Main( router_t* router ) {
     int i;
     int fd;
     int rv;
+    int max_fd = 0;
 
     while( 1 ) {
         FD_ZERO( &select_set );
         for( i = 0; i < router->_m_num_neighbors; ++ i ) {
-            FD_CLR( router->_m_neighbors_table[i].sock_fd, &select_set );
-            FD_SET( router->_m_neighbors_table[i].sock_fd, &select_set );
+            fd = router->_m_neighbors_table[i].sock_fd;
+            if( fd > max_fd ) {
+                max_fd = fd;
+            }
+            FD_CLR( fd, &select_set );
+            FD_SET( fd, &select_set );
         }
         
         timeout.tv_sec = 5;
         timeout.tv_usec = 500000;
-        rv = select( router->_m_num_neighbors, & select_set, NULL, NULL, &timeout );
+        rv = select( max_fd + 1, & select_set, NULL, NULL, &timeout );
 
         if( rv == 0 ) {
             debug1( "Select() timed out, sending packet\n" );

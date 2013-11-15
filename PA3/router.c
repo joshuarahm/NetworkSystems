@@ -377,7 +377,6 @@ uint8_t update_routing_table(router_t *router, ls_packet_t *packet) {
 
 		current.id[current.num_routers++] = shortest.dest;
 		entry = Router_GetRoutingEntryForNode(router, shortest.dest);
-		//TODO: Add routing info
 		if (!entry) {
 			//Add entry into destinations
 			entry = &router->_m_destinations[router->_m_num_destinations++];

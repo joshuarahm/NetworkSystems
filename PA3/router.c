@@ -18,14 +18,22 @@
 #include <pthread.h>
 #include <sys/select.h>
 
-void read_packet( int fd, ls_packet_t* packet ) {
+void read_packet( int fd, ls_packet_t* packet, router_t* router ) {
     uint8_t input[255];
-    uint8_t size;
+    int tmpfd;
+    int i;
 
-    read( fd, &size, 1 );
-    read( fd, input, size );
+    read( fd, input, 1 );
+    read( fd, input + 1, input[0] );
 
     deserialize( packet, input );
+    
+    for( i = 0; i < router->_m_num_neighbors; ++ i ) {
+        tmpfd = router->_m_neighbors_table[i].sock_fd;
+        if( tmpfd != fd ) {
+            write( tmpfd, input, input[0] + 1 );
+        }
+    }
 }
 
 void Router_Main( router_t* router ) {
@@ -37,6 +45,7 @@ void Router_Main( router_t* router ) {
     ls_packet_t packet;
     int i;
     int fd;
+    int rv;
 
     while( 1 ) {
         FD_ZERO( &select_set );
@@ -45,11 +54,16 @@ void Router_Main( router_t* router ) {
             FD_SET( router->_m_neighbors_table[i].sock_fd, &select_set );
         }
         
-        select( router->_m_num_neighbors, & select_set, NULL, NULL, &timeout );
+        rv = select( router->_m_num_neighbors, & select_set, NULL, NULL, &timeout );
+
+        if( rv == 0 ) {
+
+        }
+
         for( i = 0; i < router->_m_num_neighbors; ++ i ) {
             fd = router->_m_neighbors_table[i].sock_fd;
             if( FD_ISSET( fd, &select_set ) ) {
-                read_packet( fd, &packet );
+                read_packet( fd, &packet, router );
                 update_routing_table( router, &packet );
             }
         }

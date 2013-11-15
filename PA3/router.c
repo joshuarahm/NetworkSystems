@@ -27,15 +27,19 @@ int read_packet( int fd, ls_packet_t* packet, router_t* router ) {
         return -1;
     }
 
-    read( fd, input + 1, input[0] );
+    i = read( fd, input + 1, input[0] );
+    debug3( "Read %d bytes from socket\n", i );
 
     deserialize( packet, input );
-    
-    for( i = 0; i < router->_m_num_neighbors; ++ i ) {
-        tmpfd = router->_m_neighbors_table[i].sock_fd;
-        if( tmpfd != fd ) {
-            write( tmpfd, input, input[0] + 1 );
+    if( update_routing_table( router, packet ) ) {
+        
+        for( i = 0; i < router->_m_num_neighbors; ++ i ) {
+            tmpfd = router->_m_neighbors_table[i].sock_fd;
+            if( tmpfd != fd ) {
+                write( tmpfd, input, input[0] + 1 );
+            }
         }
+    
     }
 
     return 0;
@@ -90,7 +94,6 @@ void Router_Main( router_t* router ) {
                     if( read_packet( fd, &packet, router ) < 0 ) {
                         debug1( "No data ready to read from socket WTF?!?!\n" );
                     }
-                    update_routing_table( router, &packet );
                 }
             }
     

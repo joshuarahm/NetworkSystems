@@ -78,9 +78,9 @@ typedef struct {
 } ls_set_t;
 
 typedef struct {
-	uint8_t src;
-	uint8_t dest;
-	uint8_t cost;
+	node_t src;
+	node_t dest;
+	int16_t cost;
 } ls_link_t;
 
 /*
@@ -108,10 +108,10 @@ typedef struct {
 
 
 /* Returns a routing entry for the node given */
-routing_entry_t* Router_GetRoutingEntryForNode( router_t* router, node_t routing_node );
+routing_entry_t* Router_GetRoutingEntryForNode( router_t* router, const node_t routing_node );
 
 /* Returns the neighbor that will route */
-neighbor_t* Router_GetNeighborForRoutingEntry( router_t* router, routing_entry_t* routing_entry );
+neighbor_t* Router_GetNeighborForRoutingEntry( router_t* router, const routing_entry_t* routing_entry );
 
 /* Read a router and it's starting table from the file */
 int parse_router( uint8_t router_id, router_t* router, const char* filename );
@@ -123,13 +123,22 @@ void serialize(const ls_packet_t *packet, uint8_t *outbuf);
 
 void deserialize(ls_packet_t *packet, const uint8_t *inbuf);
 
+/* Creates an LS packet from the router's current neighbors. */
 uint8_t *create_packet(router_t *router, uint8_t should_close);
 
 void close_router( router_t *router );
 
+/* Returns 1 if the packet 'incoming' should/needs to be processed in comparison to the packet 'orig' */
 uint8_t packet_has_update(ls_packet_t *orig, ls_packet_t *incoming);
 
-uint8_t set_has_node(ls_set_t *set, node_t nodeid);
+/* Returns 1 if the given set contains the given nodeid */
+uint8_t set_has_node(const ls_set_t *set, const node_t nodeid);
+
+/* Manually search the neighbor's table for a given node. Returns an index into _m_neighbors_table */
+uint8_t get_neighbor_idx(router_t *router, const node_t nodeid);
+
+/* Given a link ( X->Y, 5) determine what the gateway_idx will be */
+uint8_t get_gateway_index(router_t *router, const ls_link_t *dest);
 
 /* Returns 1 if an actual update occurred. */
 uint8_t update_routing_table(router_t *router, ls_packet_t *incoming);

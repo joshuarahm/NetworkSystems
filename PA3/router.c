@@ -11,6 +11,8 @@
 #include <string.h>
 #include <sys/types.h>
 #include <time.h> 
+#include <assert.h>
+#include "debugprint.h"
 
 #include <pthread.h>
 
@@ -155,7 +157,7 @@ uint8_t *create_packet(router_t *router, uint8_t should_close) {
 	return outbuf;
 }
 
-routing_entry_t* Router_GetRoutingEntryForNode( router_t* router, node_t routing_node ) {
+routing_entry_t* Router_GetRoutingEntryForNode( router_t* router, const node_t routing_node ) {
     int dest = router->_m_routing_table[ routing_node ];
 
     if( dest > router->_m_num_destinations ) {
@@ -165,7 +167,7 @@ routing_entry_t* Router_GetRoutingEntryForNode( router_t* router, node_t routing
     return & router->_m_destinations[ dest ];
 }
 
-neighbor_t* Router_GetNeighborForRoutingEntry( router_t* router, routing_entry_t* routing_entry ) {
+neighbor_t* Router_GetNeighborForRoutingEntry( router_t* router, const routing_entry_t* routing_entry ) {
     if( routing_entry->gateway_idx > router->_m_num_neighbors ) {
         return NULL;
     }
@@ -243,7 +245,7 @@ uint8_t packet_has_update(ls_packet_t *orig, ls_packet_t *incoming) {
 	return 0; //Seq num was too old
 }
 
-uint8_t set_has_node(ls_set_t *set, node_t nodeid) {
+uint8_t set_has_node(const ls_set_t *set, const node_t nodeid) {
 	int i;
 	for (i=0; i < set->num_routers; i++) {
 		if (set->id[i] == nodeid)
@@ -252,35 +254,80 @@ uint8_t set_has_node(ls_set_t *set, node_t nodeid) {
 	return 0;
 }
 
+uint8_t get_neighbor_idx(router_t *router, const node_t nodeid) {
+	int i;
+	for (i=0; i < router->_m_num_neighbors; i++) {
+		if (router->_m_neighbors_table[i].node_id == nodeid) {
+			return i;
+		}
+	}
+	assert(1==2); //This shouldn't occur D:
+	return 255;
+}
+
+uint8_t get_gateway_index(router_t *router, const ls_link_t *dest) {
+	if (dest->src == router->_m_id) {
+		//src is us, dest must be immediate neighbor
+		return get_neighbor_idx(router, dest->dest);
+	} else {
+		//src is not us, use src to index into routing table and return src's gateway_idx
+		return Router_GetRoutingEntryForNode(router, dest->src)->gateway_idx;
+	}
+}
+
 uint8_t update_routing_table(router_t *router, ls_packet_t *packet) {
-	int curr_node_index;
-	routing_entry_t *old_entry, *new_entry;
+	int curr_neighbor, node_index;
+	routing_entry_t *entry;
+	ls_link_t shortest;
+	shortest.cost=-1;
 	
 	ls_set_t current;
-	if ((old_entry = Router_GetRoutingEntryForNode(router, packet->origin))) {
-		if (!packet_has_update(old_entry->packet, packet)) {
-			return 0;
+	assert(packet);
+	if ((entry = Router_GetRoutingEntryForNode(router, packet->origin))) {
+		if (packet_has_update(entry->packet, packet)) {
+			entry = Router_GetRoutingEntryForNode(router, packet->origin);
+			memcpy(entry->packet, packet, sizeof(ls_packet_t));
+			debug3("Processed packet with replacement information, nodeid = %d\n", packet->origin);
 		} else {
-			//Update existing info
+			debug3("Processed packet with no new information, discarding, nodeid = %d\n", packet->origin);
+			return 0;
 		}
 	} else {
-		new_entry = &router->_m_destinations[router->_m_num_destinations++];
-		new_entry->dest_id = packet->origin;
-		new_entry->packet = malloc(sizeof(ls_packet_t));
+		debug3("added new packet to destinations, nodeid = %d\n", packet->origin);
+		entry = &router->_m_destinations[router->_m_num_destinations++];
+		entry->dest_id = packet->origin;
+		entry->packet = malloc(sizeof(ls_packet_t));
+		memcpy(entry->packet, packet, sizeof(ls_packet_t));
 	}
-	//Packet must contain new info
 
+	//Update routing table
 
 	current.num_routers = 1;
 	current.id[0] = router->_m_id;
-	for (current.num_routers = 1; current.num_routers < router->_m_num_destinations+1; current.num_routers++) {
-		for (curr_node_index = 0; curr_node_index < current.num_routers; curr_node_index++) {
-			 if (current.id[curr_node_index] == router->_m_id) {
-				 //We don't have an LSP packet for ourself, we instead check our neighbor costs
-			 } else {
-				 //Everyone else should have an entry in the routing table
-
-			 }
+	/* Add nodes to the set one at a time, until all destinations are in the set.
+	   To determine which node to add, iterate through ever node in the current set and
+	   find the link with the lowest cost. */
+	while (current.num_routers < router->_m_num_destinations) { //Until all dests processed
+		for (node_index = 0; node_index < current.num_routers; node_index++) { //Iterate through current set
+			if (current.id[node_index] == router->_m_id) {
+				//Check neighbors from the neighbors table
+				for (curr_neighbor = 0; curr_neighbor < router->_m_num_neighbors; curr_neighbor++) {
+					if (shortest.cost == -1) {
+						shortest.src = router->_m_id;
+						shortest.dest = router->_m_neighbors_table[curr_neighbor].node_id;
+						shortest.cost = router->_m_neighbors_table[curr_neighbor].cost;
+					} else {
+					}
+				}
+			} else {
+				//Check neighbors from routing entry in the routing table
+				entry = Router_GetRoutingEntryForNode(router, current.id[node_index]);
+				for (curr_neighbor = 0; curr_neighbor < entry->packet->num_entries; curr_neighbor++) { //For current node's neighbors
+					if (shortest.cost == -1) {
+						//shortest.src 
+					}
+				}
+			}
 		}
 	}
 	return 0;

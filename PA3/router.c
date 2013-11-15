@@ -214,6 +214,7 @@ void deserialize(ls_packet_t *packet, const uint8_t *inbuf) {
 	packet->should_close = inbuf[0];
 	packet->num_entries = inbuf[1];
 	packet->origin = inbuf[2];
+	debug4("Deserialized: should_close: %d, num_entries: %d, origin: %c\n", packet->should_close, packet->num_entries, packet->origin);
 	uint32_t *seq_num_ptr = (uint32_t*) inbuf+3;
 	*seq_num_ptr = htonl(packet->seq_num);
 	for (i = 0; i < packet->num_entries; i++) {
@@ -228,6 +229,8 @@ uint8_t create_packet(router_t *router, uint8_t should_close, uint8_t *outbuf) {
 	tmp.should_close = should_close;
 	tmp.num_entries = router->_m_num_neighbors;
 	tmp.seq_num = ++(router->_m_seq_num);
+	debug4("New: should_close: %d, num_entries: %d, origin: %c\n", packet->should_close, packet->num_entries, packet->origin);
+
 	for (i = 0; i < tmp.num_entries; i++) {
 		tmp.dest_id[i] = router->_m_neighbors_table[i].node_id;
 	}

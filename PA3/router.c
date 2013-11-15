@@ -14,6 +14,7 @@
 #include <assert.h>
 #include "debugprint.h"
 #include <fcntl.h>
+#include "logging.h"
 
 #include <pthread.h>
 #include <sys/select.h>
@@ -40,6 +41,7 @@ int read_packet( int fd, ls_packet_t* packet, router_t* router ) {
 
     deserialize( packet, input + 1 );
     if( update_routing_table( router, packet ) ) {
+		write_routing_table(stdout, router);
         
         for( i = 0; i < router->_m_num_neighbors; ++ i ) {
             tmpfd = router->_m_neighbors_table[i].sock_fd;
@@ -228,8 +230,10 @@ uint8_t serialize(const ls_packet_t *packet, uint8_t *outbuf) {
 	outbuf[0] = packet->should_close;
 	outbuf[1] = packet->num_entries;
 	outbuf[2] = packet->origin;
-	uint32_t *seq_num_ptr = (uint32_t*) outbuf+3;
-	*seq_num_ptr = htonl(packet->seq_num);
+	uint32_t tmp = htonl(packet->seq_num);
+	outbuf[3] = (tmp&0xFF); outbuf[4]=((tmp>>8)&0xFF);
+	outbuf[5] = ((tmp>>16)&0xFF); outbuf[6]=((tmp>>24)&0xFF);
+	debug4("Serialized: should_close: %d, num_entries: %d, origin: %c, seqnum: %d\n", packet->should_close, packet->num_entries, packet->origin, packet->seq_num);
 	for (i = 0; i < packet->num_entries; i++) {
 		outbuf[(2*i)+LS_PACKET_OVERHEAD] = packet->dest_id[i];
 		outbuf[(2*i)+LS_PACKET_OVERHEAD+1] = packet->cost[i];
@@ -242,9 +246,11 @@ void deserialize(ls_packet_t *packet, const uint8_t *inbuf) {
 	packet->should_close = inbuf[0];
 	packet->num_entries = inbuf[1];
 	packet->origin = inbuf[2];
-	debug4("Deserialized: should_close: %d, num_entries: %d, origin: %c\n", packet->should_close, packet->num_entries, packet->origin);
-	uint32_t *seq_num_ptr = (uint32_t*) inbuf+3;
-	*seq_num_ptr = htonl(packet->seq_num);
+	uint32_t tmp;
+	tmp = inbuf[3]|(inbuf[4]<<8)|(inbuf[5]<<16)|(inbuf[6]<<24);
+	packet->seq_num = ntohl(tmp);
+	debug4("Deserialized: should_close: %d, num_entries: %d, origin: %c, seqnum: %d\n", packet->should_close, packet->num_entries, packet->origin, packet->seq_num);
+	//*seq_num_ptr = ntohl(packet->seq_num);
 	for (i = 0; i < packet->num_entries; i++) {
 		packet->dest_id[i] = inbuf[(2*i)+LS_PACKET_OVERHEAD];
 		packet->cost[i] = inbuf[(2*i)+LS_PACKET_OVERHEAD+1];
@@ -254,6 +260,7 @@ void deserialize(ls_packet_t *packet, const uint8_t *inbuf) {
 uint8_t create_packet(router_t *router, uint8_t should_close, uint8_t *outbuf) {
 	int i;
 	ls_packet_t tmp;
+	memset(&tmp, 0, sizeof(tmp));
 	tmp.origin = router->_m_id;
 	tmp.should_close = should_close;
 	tmp.seq_num = ++(router->_m_seq_num);
@@ -475,14 +482,18 @@ uint8_t update_routing_table(router_t *router, ls_packet_t *packet) {
 		for (node_index = 0; node_index < current.num_routers; node_index++) { //Iterate through current set
 			if (current.id[node_index] == router->_m_id) {
 				//Check neighbors from the neighbors table
-				for (curr_neighbor = 0; curr_neighbor < router->_m_num_neighbors; curr_neighbor++)
-					set_shortest_neighbor(router, &shortest, curr_neighbor);
+				for (curr_neighbor = 0; curr_neighbor < router->_m_num_neighbors; curr_neighbor++) {
+					if (!set_has_node(&current, router->_m_neighbors_table[curr_neighbor].node_id))
+						set_shortest_neighbor(router, &shortest, curr_neighbor);
+				}
 			} else {
 				if (entry->packet) {
 					//Check neighbors from routing entry in the routing table
 					entry = Router_GetRoutingEntryForNode(router, current.id[node_index]);
-					for (curr_neighbor = 0; curr_neighbor < entry->packet->num_entries; curr_neighbor++) //For current node's neighbors
-						set_shortest_distant(router, &shortest, current.id[node_index], curr_neighbor);
+					for (curr_neighbor = 0; curr_neighbor < entry->packet->num_entries; curr_neighbor++) { //For current node's neighbors 
+						if (!set_has_node(&current, router->_m_destinations[curr_neighbor].dest_id))
+							set_shortest_distant(router, &shortest, current.id[node_index], curr_neighbor);
+					}
 				} else {
 						debug3("Skipped parsing neighbors for an entry that does not have a packet stored: %c.\n", entry->dest_id);
 				}
@@ -502,5 +513,5 @@ uint8_t update_routing_table(router_t *router, ls_packet_t *packet) {
 		entry->gateway_idx = get_gateway_idx(router, &shortest);
 		entry->cost = shortest.cost;
 	}
-	return 0;
+	return 1;
 }

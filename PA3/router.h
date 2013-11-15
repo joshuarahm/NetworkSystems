@@ -11,7 +11,7 @@
 #include <stdio.h>
 
 #define MAX_NUM_ROUTERS 32
-#define LS_PACKET_OVERHEAD 7
+#define LS_PACKET_OVERHEAD 8
 
 typedef int SOCKET;
 typedef uint8_t node_t;

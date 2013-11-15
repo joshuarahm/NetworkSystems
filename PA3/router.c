@@ -237,9 +237,10 @@ void deserialize(ls_packet_t *packet, const uint8_t *inbuf) {
 uint8_t create_packet(router_t *router, uint8_t should_close, uint8_t *outbuf) {
 	int i;
 	ls_packet_t tmp;
+	tmp.origin = router->_m_id;
 	tmp.should_close = should_close;
-	tmp.num_entries = router->_m_num_neighbors;
 	tmp.seq_num = ++(router->_m_seq_num);
+	tmp.num_entries = router->_m_num_neighbors;
 	debug4("New: should_close: %d, num_entries: %d, origin: %c\n", tmp.should_close, tmp.num_entries, tmp.origin);
 
 	for (i = 0; i < tmp.num_entries; i++) {

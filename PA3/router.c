@@ -18,12 +18,15 @@
 #include <pthread.h>
 #include <sys/select.h>
 
-void read_packet( int fd, ls_packet_t* packet, router_t* router ) {
+int read_packet( int fd, ls_packet_t* packet, router_t* router ) {
     uint8_t input[255];
     int tmpfd;
     int i;
 
-    read( fd, input, 1 );
+    if( read( fd, input, 1 ) < 1 ) {
+        return -1;
+    }
+
     read( fd, input + 1, input[0] );
 
     deserialize( packet, input );
@@ -34,11 +37,14 @@ void read_packet( int fd, ls_packet_t* packet, router_t* router ) {
             write( tmpfd, input, input[0] + 1 );
         }
     }
+
+    return 0;
 }
 
 void broadcast_packet( router_t* router ) {
     uint8_t outbuf[255];
-    uint8_t size = create_packet( router, 0, outbuf );
+    uint8_t size = create_packet( router, 0, outbuf + 1 );
+    outbuf[0] = size;
     int i;
     for( i = 0; i < router->_m_num_neighbors; ++ i ) {
         write( router->_m_neighbors_table[i].sock_fd, outbuf, size );
@@ -81,7 +87,9 @@ void Router_Main( router_t* router ) {
 
                 if( FD_ISSET( fd, &select_set ) ) {
                     debug1( "fd %d in set; reading packet\n", fd );
-                    read_packet( fd, &packet, router );
+                    if( read_packet( fd, &packet, router ) < 0 ) {
+                        debug1( "No data ready to read from socket WTF?!?!\n" );
+                    }
                     update_routing_table( router, &packet );
                 }
             }

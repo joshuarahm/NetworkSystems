@@ -13,8 +13,48 @@
 #include <time.h> 
 #include <assert.h>
 #include "debugprint.h"
+#include <fcntl.h>
 
 #include <pthread.h>
+#include <sys/select.h>
+
+void read_packet( int fd, ls_packet_t* packet ) {
+    uint8_t input[255];
+    uint8_t size;
+
+    read( fd, &size, 1 );
+    read( fd, input, size );
+
+    deserialize( packet, input );
+}
+
+void Router_Main( router_t* router ) {
+    struct timeval timeout;
+    timeout.tv_sec = 5;
+    timeout.tv_usec = 500000;
+
+    fd_set select_set;
+    ls_packet_t packet;
+    int i;
+    int fd;
+
+    while( 1 ) {
+        FD_ZERO( &select_set );
+        for( i = 0; i < router->_m_num_neighbors; ++ i ) {
+            FD_CLR( router->_m_neighbors_table[i].sock_fd, &select_set );
+            FD_SET( router->_m_neighbors_table[i].sock_fd, &select_set );
+        }
+        
+        select( router->_m_num_neighbors, & select_set, NULL, NULL, &timeout );
+        for( i = 0; i < router->_m_num_neighbors; ++ i ) {
+            fd = router->_m_neighbors_table[i].sock_fd;
+            if( FD_ISSET( fd, &select_set ) ) {
+                read_packet( fd, &packet );
+                update_routing_table( router, &packet );
+            }
+        }
+    }
+}
 
 int try_connect( uint16_t port ) {
 	int sockfd = 0;
@@ -185,6 +225,12 @@ neighbor_t* Router_GetNeighborForRoutingEntry( router_t* router, const routing_e
 /* Try to connect to a neighbor. This function
  * will set the sock_fd member of the neighbor
  * to the handle for communication with the neighbor */
+static int set_blocking( int fd, int blocking ) {
+   int flags = fcntl(fd, F_GETFL, 0);
+   if (flags < 0) return 1;
+   flags = blocking ? (flags&~O_NONBLOCK) : (flags|O_NONBLOCK);
+   return (fcntl(fd, F_SETFL, flags) == 0) ? 0 : -1;
+}
 void* open_neighbor( neighbor_t* neighbor ) {
     printf( "Trying to connect to: %c\n", neighbor->node_id );
     SOCKET fd = try_connect( neighbor->dest_tcp_port );
@@ -198,6 +244,8 @@ void* open_neighbor( neighbor_t* neighbor ) {
         printf( "Connected to %c\n", neighbor->node_id );
     }
 
+    /* We don't want our sockets to block */
+    set_blocking( fd, 0 );
     neighbor->sock_fd = fd;
     neighbor->serv_fd = serv;
 

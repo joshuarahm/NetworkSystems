@@ -113,6 +113,8 @@ routing_entry_t* Router_GetRoutingEntryForNode( router_t* router, const node_t r
 /* Returns the neighbor that will route */
 neighbor_t* Router_GetNeighborForRoutingEntry( router_t* router, const routing_entry_t* routing_entry );
 
+void Router_Main( router_t* router );
+
 /* Read a router and it's starting table from the file */
 int parse_router( uint8_t router_id, router_t* router, const char* filename );
 

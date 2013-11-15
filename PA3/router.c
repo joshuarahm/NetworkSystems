@@ -332,12 +332,12 @@ uint8_t update_routing_table(router_t *router, ls_packet_t *packet) {
 	ls_set_t current;
 	assert(packet);
 	if ((entry = Router_GetRoutingEntryForNode(router, packet->origin))) {
-		if (packet_has_update(entry->packet, packet)) {
+		if (packet_has_update(entry->packet, packet) && packet->origin != router->_m_id) {
 			entry = Router_GetRoutingEntryForNode(router, packet->origin);
 			memcpy(entry->packet, packet, sizeof(ls_packet_t));
 			debug3("Processed packet with replacement information, nodeid = %d\n", packet->origin);
 		} else {
-			debug3("Processed packet with no new information, discarding, nodeid = %d\n", packet->origin);
+			debug3("Processed packet with no useful information, discarding, nodeid = %d\n", packet->origin);
 			return 0;
 		}
 	} else {

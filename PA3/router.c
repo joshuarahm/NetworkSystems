@@ -43,7 +43,8 @@ int read_packet( int fd, ls_packet_t* packet, router_t* router ) {
     if( update_routing_table( router, packet ) ) {
 		time_t ltime; /* calendar time */
 		ltime=time(NULL); /* get current cal time */
-		fprintf(router->log, "%s",asctime( localtime(&ltime) ) );
+		fprintf(router->log, "\nLS packet from '%c' caused change in routing table.\n", packet->origin);
+		fprintf(router->log, "\t%s",asctime( localtime(&ltime) ) );
 		write_routing_table(router->log, router);
         
         for( i = 0; i < router->_m_num_neighbors; ++ i ) {

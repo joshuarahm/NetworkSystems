@@ -467,7 +467,7 @@ uint8_t update_routing_table(router_t *router, ls_packet_t *packet) {
 	}
 	if ((entry = Router_GetRoutingEntryForNode(router, packet->origin))) {
 		if (!entry->packet)
-			entry->packet = malloc(sizeof(ls_packet_t));
+			entry->packet = calloc(1, sizeof(ls_packet_t));
 
 		if (packet_has_update(entry->packet, packet) ) {
 			entry = Router_GetRoutingEntryForNode(router, packet->origin);
@@ -504,7 +504,7 @@ uint8_t update_routing_table(router_t *router, ls_packet_t *packet) {
 	/* Add nodes to the set one at a time, until all destinations are in the set.
 	   To determine which node to add, iterate through ever node in the current set and
 	   find the link with the lowest cost. */
-	while (current.num_routers < router->_m_num_destinations) { //Until all dests processed
+	while (current.num_routers <= router->_m_num_destinations) { //Until all dests processed
 		shortest.cost=-1;
 		for (node_index = 0; node_index < current.num_routers; node_index++) { //Iterate through current set
 			debug3("Finding neighbors for %c\n", current.id[node_index]);

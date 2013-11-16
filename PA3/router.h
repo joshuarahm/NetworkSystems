@@ -92,6 +92,9 @@ typedef struct {
 	uint8_t         _m_id;
 	uint32_t		_m_seq_num;
 
+	//File handle to log to
+	FILE *log;
+
     /* The array of destinations known about */
 	uint8_t         _m_num_destinations;
 	routing_entry_t _m_destinations[MAX_NUM_ROUTERS];

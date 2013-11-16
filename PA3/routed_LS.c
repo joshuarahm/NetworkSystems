@@ -22,9 +22,11 @@ void sighandler( int sig ) {
 
 int main(int argc, char* argv[]) {
 	int i;
+	FILE *log;
 
-	if( argc < 2 ) {
+	if( argc < 4 ) {
 		fprintf( stderr, "Not enough arguments\n" );
+		fprintf( stderr, "Usage: ./routed_LS <nodename> <logfile> <initfile>" );
 		return -1;
 	}
 
@@ -32,11 +34,18 @@ int main(int argc, char* argv[]) {
 		fprintf( stderr, "Expected single char\n" );
 		return -1;
 	}
+	
+	if (!(log = fopen(argv[2], "w"))) {
+		fprintf( stderr, "Failed to open log file %s.\n", argv[2]);
+		return -1;
+	}
+	
 
-	parse_router( argv[1][0], & router, "PA3_initialization.txt" );
+	parse_router( argv[1][0], & router, argv[3] );
+	router.log = log;
 
 	/* Just print the entries for now */
-	printf( "Neighbors:\n" );
+	/*printf( "Neighbors:\n" );
 	for( i = 0 ; i < router._m_num_neighbors; ++ i ) {
 		neighbor_t* neighbor = & router._m_neighbors_table[i];
 		printf( "[neighbor node_id=%c outgoing_tcp_port=%d dest_tcp_port=%d cost=%d serv_fd=%d sock_fd=%d]",
@@ -44,6 +53,7 @@ int main(int argc, char* argv[]) {
 			neighbor->cost, neighbor->serv_fd, neighbor->sock_fd );
 		printf("\n");
 	}
+	*/
 
     signal( SIGINT, sighandler );
 
@@ -51,7 +61,7 @@ int main(int argc, char* argv[]) {
 	wait_for_neighbors( & router );
 
 	printf( "All Neighbors are Up!!!\n" );
-	printf( "Neighbors:\n" );
+	printf( "Connected Neighbors:\n" );
 	for( i = 0 ; i < router._m_num_neighbors; ++ i ) {
 		neighbor_t* neighbor = & router._m_neighbors_table[i];
 		printf( "[neighbor node_id=%c outgoing_tcp_port=%d dest_tcp_port=%d cost=%d serv_fd=%d sock_fd=%d]",

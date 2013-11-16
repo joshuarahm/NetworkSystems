@@ -37,11 +37,11 @@ int read_packet( int fd, ls_packet_t* packet, router_t* router ) {
     }
 
     i = read( fd, input + 1, input[0] );
-    debug3( "Read %d bytes from socket\n", i );
+    debug1( "Read a packet of %d bytes!\n", i );
 
     deserialize( packet, input + 1 );
     if( update_routing_table( router, packet ) ) {
-		write_routing_table(stdout, router);
+		write_routing_table(router->log, router);
         
         for( i = 0; i < router->_m_num_neighbors; ++ i ) {
             tmpfd = router->_m_neighbors_table[i].sock_fd;
@@ -97,20 +97,20 @@ void Router_Main( router_t* router ) {
         current_time = getCurrentTimeMillis();
         if( current_time - last_broadcast > 5000 ) {
             last_broadcast = current_time;
-            debug1( "Periodic packet sending\n" );
+            debug1( "Timeout. Send a new link state packet.\n" );
             broadcast_packet( router );
         }
         
         if( rv > 0 ) {
     
-            debug1( "Select() returned %d sockets ready for read\n", rv );
+            debug4( "Select() returned %d sockets ready for read\n", rv );
             for( i = 0; i < router->_m_num_neighbors; ++ i ) {
                 fd = router->_m_neighbors_table[i].sock_fd;
 
                 if( FD_ISSET( fd, &select_set ) ) {
-                    debug1( "fd %d in set; reading packet\n", fd );
+                    debug3( "fd %d in set; reading packet\n", fd );
                     if( read_packet( fd, &packet, router ) < 0 ) {
-                        debug1( "No data ready to read from socket WTF?!?!\n" );
+                        debug4( "No data ready to read from socket WTF?!?!\n" );
 						close_router( router );
                         exit( 2 );
                     }
@@ -126,7 +126,7 @@ int try_connect( uint16_t port ) {
     struct sockaddr_in serv_addr; 
 
     if((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-        printf("\n Error : Could not create socket \n");
+        debug3("\n Error : Could not create socket \n");
         return 0;
     } 
 
@@ -136,12 +136,12 @@ int try_connect( uint16_t port ) {
     serv_addr.sin_port = htons(port); 
 
     if(inet_pton(AF_INET, "127.0.0.1", &serv_addr.sin_addr)<=0) {
-        printf("\n inet_pton error occured\n");
+        debug1("\n inet_pton error occured\n");
         return 0;
     } 
 
     if( connect(sockfd, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0) {
-       printf("Error: Connect failed on port %d\n", port);
+       debug1("Error: Connect failed on port %d\n", port);
        return 0;
     } 
 
@@ -211,7 +211,7 @@ int parse_router( uint8_t router_id, router_t* router, const char* filename ) {
 		fgetc( file );
 
 		if( n_filled < 5 ) {
-			fprintf( stderr, "malformed file; line %d\n", line );
+			debug3( "malformed file; line %d\n", line );
 			return 2;
 		}
 
@@ -255,7 +255,7 @@ void deserialize(ls_packet_t *packet, const uint8_t *inbuf) {
 	for (i = 0; i < packet->num_entries; i++) {
 		packet->dest_id[i] = inbuf[(2*i)+LS_PACKET_OVERHEAD];
 		packet->cost[i] = inbuf[(2*i)+LS_PACKET_OVERHEAD+1];
-		debug4("Deserialed neighbor node %d cost %d. Origin: %d\n", packet->dest_id[i], packet->cost[i], packet->origin);
+		debug4("Deserialed neighbor node %d cost %d. Origin: %c\n", packet->dest_id[i], packet->cost[i], packet->origin);
 	}
 }
 
@@ -305,16 +305,16 @@ static int set_blocking( int fd, int blocking ) {
    return (fcntl(fd, F_SETFL, flags) == 0) ? 0 : -1;
 }
 void* open_neighbor( neighbor_t* neighbor ) {
-    printf( "Trying to connect to: %c\n", neighbor->node_id );
+    debug1( "Trying to connect to: %c\n", neighbor->node_id );
     SOCKET fd = try_connect( neighbor->dest_tcp_port );
     SOCKET serv = -1;
 
     if( fd == 0 ) {
         /* The host was not up yet */
         fd = listen_connect( neighbor->outgoing_tcp_port, & serv );
-        printf( "Accepted connection from %c\n", neighbor->node_id );
+        debug1( "Accepted connection from %c\n", neighbor->node_id );
     } else {
-        printf( "Connected to %c\n", neighbor->node_id );
+        debug1( "Connected to %c\n", neighbor->node_id );
     }
 
     /* We don't want our sockets to block */
@@ -477,9 +477,9 @@ uint8_t update_routing_table(router_t *router, ls_packet_t *packet) {
 			debug4("Neighbors for added packet:\n");
 			for (i=0; i < entry->packet->num_entries; i++)
 				debug4("Dest id: %d, cost: %d\n", entry->packet->dest_id[i], entry->packet->cost[i]);
-			debug3("Processed packet with replacement information, nodeid = %d\n", packet->origin);
+			debug1("Processed packet with replacement information, nodeid = %c\n", packet->origin);
 		} else {
-			debug3("Processed packet with no useful information, discarding, nodeid = %d\n", packet->origin);
+			debug1("Processed packet with no useful information, discarding, nodeid = %c\n", packet->origin);
 			return 0;
 		}
 	} else {

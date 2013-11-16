@@ -5,7 +5,7 @@ LDFLAGS:=
 ROUTER:=routed_LS
 TEST:=routertest
 TOBJS:=router.o logging.o routertest.o
-DEBUG?=0
+DEBUG?=1
 DEBUGFLAGS=-DDEBUG$(DEBUG)
 
 all: routed_LS

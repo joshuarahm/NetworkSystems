@@ -32,7 +32,7 @@ void* trie_loose_search( struct trie* tree, const char* key ) {
     }
 }
 
-void* trie_search( trie_t* ths, const char* key ) {
+void* trie_get( trie_t* ths, const char* key ) {
     char ch = * key ;
     int index = (ch & 0xF0) >> 4 ;
     struct trie* next = ths->_m_children[ index ];
@@ -69,7 +69,7 @@ void trie_loose_insert( struct trie* tree, const char* key, void* val ) {
     }
 }
 
-void trie_insert( trie_t* ths, const char* key, void* val ) {
+void trie_put( trie_t* ths, const char* key, void* val ) {
     char ch = * key;
     int index = (ch & 0xF0) >> 4 ;
     struct trie** next = &ths->_m_children[ index ] ;   
@@ -79,4 +79,38 @@ void trie_insert( trie_t* ths, const char* key, void* val ) {
     }
 
     trie_loose_insert( * next, key, val ) ;
+}
+
+static void trie_loose_iterate( struct trie* tree, void(*func)(void*,void*), void* arg ) {
+    int i,j;
+    struct trie_lev2* tmp ;
+
+    if ( ! tree ) return ;
+
+    for ( i = 0 ; i < 16 ; ++ i ) {
+        if ( tree->_m_values[i] ) {
+            func( arg, tree->_m_values[i] );
+        }
+    }
+
+    for ( i = 0 ; i < 16 ; ++ i ) {
+        tmp = tree->_m_children[i] ;
+        if ( tmp ) {
+            for ( j = 0 ; j < 16 ; ++ j ) {
+                trie_loose_iterate( tmp->_m_children[j], func, arg );
+            }
+        }
+    }
+}
+
+void trie_iterate( trie_t* ths, void(*func)(void*,void*), void* arg ) {
+    int i;
+
+    if ( ! ths ) {
+        return ;
+    }
+
+    for( i = 0; i < 16; ++ i ) {
+        trie_loose_iterate( ths->_m_children[i], func, arg ) ;
+    }
 }

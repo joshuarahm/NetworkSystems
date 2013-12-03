@@ -7,6 +7,8 @@
  * trie.h: <description>
  */
 
+#define ITERATE_FUNCTION( func ) ((void(*)(void*,void*))func)
+
 struct trie ;
 
 struct trie_lev2 {
@@ -18,14 +20,12 @@ struct trie {
     void*        _m_values[16];
 };
 
-struct trie_head {
-    struct trie* _m_children[16];
-};
+typedef struct trie_lev2 trie_t;
 
-typedef struct trie_head trie_t;
+void* trie_get( trie_t* ths, const char* key ) ;
 
-void* trie_search( trie_t* ths, const char* key ) ;
+void  trie_put( trie_t* ths, const char* key, void* val );
 
-void  trie_insert( trie_t* ths, const char* key, void* val );
+void  trie_iterate( trie_t* ths, void(*func)(void*arg,void*val), void* arg );
 
 #endif /* TRIE_H_ */

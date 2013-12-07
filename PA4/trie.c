@@ -13,7 +13,7 @@ void* trie_loose_search( struct trie* tree, const char* key ) {
 
     char ch = * key ;
     int index = ch & 0x0F ;
-    printf( "Index: %d\n", index );
+//    printf( "Index: %d\n", index );
 
     if ( * ( key + 1 ) == 0 ) {
         return tree->_m_values[ index ] ;
@@ -26,7 +26,7 @@ void* trie_loose_search( struct trie* tree, const char* key ) {
         
         ch = * ( key + 1 ) ;
         index = ch >> 4 ;
-        printf( "Index: %d\n", index );
+//        printf( "Index: %d\n", index );
 
         return trie_loose_search( next->_m_children[index], key + 1 ) ;
     }
@@ -45,7 +45,7 @@ void trie_loose_insert( struct trie* tree, const char* key, void* val ) {
 
     char ch = * key ;
     int index = ch & 0x0F ;
-    printf( "Index: %d\n", index );
+//    printf( "Index: %d\n", index );
 
     if ( * ( key + 1 ) == 0 ) {
         tree->_m_values[ index ] = val ; 
@@ -58,7 +58,7 @@ void trie_loose_insert( struct trie* tree, const char* key, void* val ) {
 
         ch = * ( key + 1 ) ;
         index = ch >> 4 ;
-        printf( "Index: %d\n", index );
+//        printf( "Index: %d\n", index );
 
         struct trie** nextnext = &(*next)->_m_children[ index ] ;
         if( *nextnext == NULL ) {

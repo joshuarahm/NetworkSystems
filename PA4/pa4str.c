@@ -107,7 +107,7 @@ void write_file_stat( int fd, file_stat_t* filestat ) {
     char buf[2048];
     snprintf( buf, 2048, "%s/%lu:%s:%s:%u\n",
         filestat->_m_file_name,
-        filestat->_m_file_size,
+        (unsigned long) filestat->_m_file_size,
         filestat->_m_owner,
         filestat->_m_host_name,
         filestat->_m_port ) ;

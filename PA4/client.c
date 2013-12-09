@@ -123,19 +123,19 @@ int connect_client( const char* hostname, uint16_t port ) {
 }
 
 int main( int argc, char** argv ) {
-    if ( argc < 3 ) {
-        fprintf( stderr, "must supply a server address and port\n" ) ;
+    if ( argc < 4 ) {
+        fprintf( stderr, "must supply a name, server address and port\n" ) ;
         return 1 ;
     }
     
     uint16_t port ;
-    if( ! parse_port_num( argv[2], & port ) ) {
+    if( ! parse_port_num( argv[3], & port ) ) {
         fprintf( stderr, "Must supply valid port number\n" ) ;
         return 2 ;
     }
     
     /* open a connection to the server */
-    int fd = connect_client( argv[1], port ) ;
+    int fd = connect_client( argv[2], port ) ;
     if ( fd == 0 ) {
         perror( "Unable to open client" ) ;
         return 3 ;
@@ -148,6 +148,7 @@ int main( int argc, char** argv ) {
     cli.fd = fd ;
 	cli.peer_fd = peer_sock;
 	start_listener(peer_sock);
+    cli.name = argv[1] ;
     run_client( & cli ) ;
 
     return 0 ;

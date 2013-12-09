@@ -13,6 +13,7 @@
 typedef struct {
     int fd ;
 	int peer_fd;
+    char* name ;
     FILE* as_file ;
     trie_t files ;
 } client_t ;

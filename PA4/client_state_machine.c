@@ -66,6 +66,11 @@ void* list_files( client_t* cli ) {
     return wait_for_input ;
 }
 
+void* exit_client( client_t* cli ) {
+	write_str( cli->fd, "DEREGISTER\n" );
+	return NULL;
+}
+
 void* wait_for_input( client_t* cli ) {
     (void) cli ;
     void* ret ;
@@ -123,6 +128,9 @@ void* wait_for_input( client_t* cli ) {
         }
 
         ret = wait_for_input ;
+	} else if ( ! strcmp( line, "exit\n" ) ) {
+		return exit_client;
+
     } else {
 		if (strlen(line) > 0)
 			line[strlen(line)-1] = '\0';
@@ -177,6 +185,10 @@ void* post_files( client_t* cli ) {
 }
 
 void* init_state( client_t* cli ) {
+	char buf[1024];
+	snprintf(buf, 1024, "REGISTER %s\n", cli->name);
+	write_str(cli->fd, buf);
+
     cli->as_file = fdopen( cli->fd, "r") ;
     memset( &cli->files, 0, sizeof( cli->files ) ) ;
     return post_files ;

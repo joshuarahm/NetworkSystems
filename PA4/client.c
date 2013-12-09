@@ -97,30 +97,6 @@ void start_listener(int fd) {
 	pthread_create(&listener, NULL, (void*(*)(void*)) peer_listener, listen_fd);
 }
 
-int connect_client( const char* hostname, uint16_t port ) {
-    int sock = socket( PF_INET, SOCK_STREAM, IPPROTO_TCP ) ;   
-    struct hostent *he ;
-    struct sockaddr_in server ;
-
-    if ( sock > 0 ) {
-
-        if( ( he = gethostbyname( hostname ) ) == NULL ) {
-            return 0 ;
-        }
-
-        memset( & server, 0, sizeof( struct sockaddr_in ) ) ;
-        memcpy( & server.sin_addr.s_addr, he->h_addr, he->h_length ) ;
-
-        server.sin_family = AF_INET ;
-        server.sin_port = htons( port ) ;
-
-        if( connect( sock, (struct sockaddr *) & server, sizeof( server ) ) < 0 ) {
-            return 0 ;
-        }
-    }
-
-    return sock ;
-}
 
 int main( int argc, char** argv ) {
     if ( argc < 4 ) {

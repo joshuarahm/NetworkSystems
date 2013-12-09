@@ -5,8 +5,39 @@
 #include <sys/stat.h>
 #include <dirent.h>
 
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <netdb.h>
+
 #define CAST( func ) \
     ( void*(*)( client_t* ) )(func)
+
+
+int connect_client( const char* hostname, uint16_t port ) {
+    int sock = socket( PF_INET, SOCK_STREAM, IPPROTO_TCP ) ;   
+    struct hostent *he ;
+    struct sockaddr_in server ;
+
+    if ( sock > 0 ) {
+
+        if( ( he = gethostbyname( hostname ) ) == NULL ) {
+            return 0 ;
+        }
+
+        memset( & server, 0, sizeof( struct sockaddr_in ) ) ;
+        memcpy( & server.sin_addr.s_addr, he->h_addr, he->h_length ) ;
+
+        server.sin_family = AF_INET ;
+        server.sin_port = htons( port ) ;
+
+        if( connect( sock, (struct sockaddr *) & server, sizeof( server ) ) < 0 ) {
+            return 0 ;
+        }
+    }
+
+    return sock ;
+}
 
 void* wait_for_input( client_t* cli ) ;
 
@@ -29,7 +60,7 @@ void* list_files( client_t* cli ) {
         }
         stat = read_file_stat_end( cli->as_file, & end ) ;
     } while ( stat && ! end ) ;
-;
+
     return wait_for_input ;
 }
 
@@ -44,6 +75,47 @@ void* wait_for_input( client_t* cli ) {
     getline( & line, & len, stdin ) ;
     if( !strcmp( line, "ls\n" ) ) {
         ret = list_files ;
+    } else if ( ! strncmp( line, "get ", 4) ) {
+        char* filename = line  + 4 ;
+        file_stat_t* fs = trie_get( &cli->files, filename ) ;
+        if( fs ) {
+            int fd = connect_client( fs->_m_host_name, fs->_m_port ) ;
+
+            if( fd <= 0 ) {
+                fprintf( stderr, "Unable to connect to peer\n" ) ;
+            } else {
+                uint32_t len ;
+                FILE* output ;
+                output = fopen( filename, "w" ) ;
+
+                if( ! output ) {
+                    perror( "Unable to open file for read" ) ;
+                } else {
+                    char buf[ 4096 ] ;
+                    snprintf( buf, sizeof( buf ), "%s\b", filename ) ;
+                    write( fd, buf, strlen(buf) ) ;
+                    read( fd, & len, sizeof( len ) ) ;
+                    len = ntohl( len ) ;
+
+                    while ( len > 0 ) {
+                        int bytes_read = read( fd, buf, sizeof( buf ) ) ; 
+
+                        if ( bytes_read <= 0 ) {
+                            fprintf( stderr, "Unable to finish download file\n" ) ;
+                            break ;   
+                        }
+
+                        fwrite( buf, 1, bytes_read, output ) ; 
+                        len -= bytes_read ;
+                    }
+                }
+            }
+
+            return wait_for_input ;
+        } else {
+            fprintf( stderr, "No such file, maybe try an ls to refresh\n" ) ;
+        }
+        
     } else {
 		if (strlen(line) > 0)
 			line[strlen(line)-1] = '\0';

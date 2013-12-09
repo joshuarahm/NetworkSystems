@@ -133,9 +133,11 @@ void connection_callback( callback_args_t* args ) {
             if( ! tmp ) {
                 fprintf( stderr, "For some reason unable to read the file stat for newfile\n" );
             } else {
-                verbose( "Adding file %s to file map\n", tmp->_m_file_name );
-                tmp->_m_host_name = strdup( ipasstr ) ;
-                trie_put_safe( &g_file_map, tmp->_m_file_name, tmp );
+				if (strcmp(tmp->_m_file_name, ".") && strcmp(tmp->_m_file_name, "..")) {
+					verbose( "Adding file %s to file map\n", tmp->_m_file_name );
+					tmp->_m_host_name = strdup( ipasstr ) ;
+					trie_put_safe( &g_file_map, tmp->_m_file_name, tmp );
+				}
             }
         } else if ( ! strcmp( word, "LIST" ) ) {
             printitr_args_t tmpargs;

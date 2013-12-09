@@ -67,7 +67,9 @@ void* list_files( client_t* cli ) {
 }
 
 void* exit_client( client_t* cli ) {
-	write_str( cli->fd, "DEREGISTER\n" );
+	char buf[2048];
+	snprintf(buf, 2048, "DEREGISTER %s\n", cli->name);
+	write_str( cli->fd, buf);
 	return NULL;
 }
 

@@ -14,6 +14,18 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 
+int SERVER_FD;
+char SERVER_NAME[1024];
+
+void sigint_handler(int sig) {
+	char buf[2048];
+	snprintf(buf, 2048, "DEREGISTER %s\n", SERVER_NAME);
+	printf("\n");
+	if (SERVER_FD)
+		write(SERVER_FD, buf, strlen(buf));
+	exit(0);
+}
+
 int parse_port_num( const char* str, uint16_t* into ) {
     uint16_t ret = 0;
     char ch ;
@@ -114,6 +126,7 @@ int main( int argc, char** argv ) {
     
     /* open a connection to the server */
     int fd = connect_client( argv[2], port ) ;
+	SERVER_FD = fd;
     if ( fd == 0 ) {
         perror( "Unable to open client" ) ;
         return 3 ;
@@ -127,6 +140,8 @@ int main( int argc, char** argv ) {
 	cli.peer_fd = peer_sock;
 	start_listener(peer_sock);
     cli.name = argv[1] ;
+	strncpy(SERVER_NAME, cli.name, 1024);
+	signal(SIGINT, sigint_handler);
     run_client( & cli ) ;
 
     return 0 ;

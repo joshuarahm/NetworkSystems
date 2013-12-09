@@ -12,6 +12,7 @@
 
 typedef struct {
     int fd ;
+    char* name ;
     FILE* as_file ;
     trie_t files ;
 } client_t ;

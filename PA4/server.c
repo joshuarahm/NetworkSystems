@@ -70,6 +70,13 @@ static int read_word( FILE* file, char* into, int size ) {
 
 void connection_callback( callback_args_t* args ) {
     FILE* asfile = fdopen( args->fd, "r" );
+
+    struct sockaddr_in client_addr ;
+    socklen_t client_len = sizeof( struct sockaddr_in );
+
+    getpeername( args->fd, (struct sockaddr*)&client_addr, &client_len ) ;
+    char* ipasstr = inet_ntoa( client_addr.sin_addr ) ;
+
     char word[128];
 
     while( ! feof( asfile ) ) {
@@ -91,6 +98,7 @@ void connection_callback( callback_args_t* args ) {
                 fprintf( stderr, "For some reason unable to read the file stat for newfile\n" );
             } else {
                 verbose( "Adding file %s to file map\n", tmp->_m_file_name );
+                tmp->_m_host_name = strdup( ipasstr ) ;
                 trie_put( &g_file_map, tmp->_m_file_name, tmp );
             }
         } else if ( ! strcmp( word, "LIST" ) ) {
@@ -132,13 +140,16 @@ int start_server_socket( uint16_t port, void (*callback)( callback_args_t* args 
 
     pthread_t tmp;
     callback_args_t argstmp;
+
     int fd;
     while( 1 ) {
         fd = accept( listen_fd, NULL, NULL ) ;
+
         if( fd <= 0 ) {
             perror( "Error on accept()" );
             return -1;
         }
+
         argstmp.fd = fd;
         verbose( "Accepted connection\n" );
         pthread_create( &tmp, NULL, ((void*(*)(void*))callback), &argstmp ) ;

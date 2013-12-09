@@ -53,15 +53,13 @@ void* wait_for_input( client_t* cli ) {
     return ret ;
 };
 
-static void write_stats( int fd, struct stat* stats, char* filename ) {
+static void write_stats( int fd, struct stat* stats, char* filename, char* name ) {
     file_stat_t filestats ;   
-    char josh[16] ;
-    strcpy( josh, "Josh" ) ;
     filestats._m_file_name = filename ;
     filestats._m_file_size = stats->st_size ;
     
     // TODO change this
-    filestats._m_owner = josh ;
+    filestats._m_owner = name ;
     filestats._m_host_name = "";
     filestats._m_port = 0 ;
 
@@ -81,7 +79,7 @@ void* post_files( client_t* cli ) {
     if( dir ) {
         while( (ent = readdir( dir )) != NULL ) {
             if( stat( ent->d_name, & stats ) == 0 ) {
-                write_stats( cli->fd, & stats, ent->d_name ) ;
+                write_stats( cli->fd, & stats, ent->d_name, cli->name ) ;
             } else {
                 fprintf( stderr, "Warning: unable to stat file %s\n", ent->d_name ) ;
             }

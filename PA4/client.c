@@ -68,7 +68,6 @@ void peer_listener(int *fd) {
 
 		for (i=0; i < 8191; i++) {
 			read(peer, fname+i, 1);
-			printf("Recived char: '%c'\n", fname[i]);
 			if (fname[i] == '\n')
 				break;
 		}
@@ -77,6 +76,7 @@ void peer_listener(int *fd) {
 		if (stat(fname, &fstat) == 0) {
 			f_size = htonl(fstat.st_size);
 			write(peer, &f_size, sizeof(uint32_t));
+			fprintf(stdout, "\nSending file %s.\n", fname);
 			tmp = fopen(fname, "r");
 			while ((bytes_read = fread(inbuf, sizeof(char), 4096, tmp)) != 0) {
 				fprintf(stdout, "Wrote %d bytes.\n", bytes_read);

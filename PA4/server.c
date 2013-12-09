@@ -103,6 +103,12 @@ static void trie_set_insert_safe( trie_set_t* set, const char* name ) {
     pthread_mutex_unlock( & g_set_mutex ) ;
 }
 
+static void trie_set_remove_safe( trie_set_t* set, const char* name ) {
+    pthread_mutex_lock( & g_set_mutex ) ;
+    trie_set_remove( set, name ) ;
+    pthread_mutex_unlock( & g_set_mutex ) ;
+}
+
 void connection_callback( callback_args_t* args ) {
     FILE* asfile = fdopen( args->fd, "r" );
 
@@ -150,7 +156,12 @@ void connection_callback( callback_args_t* args ) {
             deregister_args_t tmpargs;
             tmpargs.name = word;
             verbose( "Deregistering client %s\n", word );
+
             trie_iterate_safe( &g_file_map, ITERATE_FUNCTION( deregister_itr ), &tmpargs );
+            trie_set_remove_safe( &g_client_set, word ) ;
+
+            fflush( asfile ) ;
+            fclose( asfile ) ;
         }
     }
 }

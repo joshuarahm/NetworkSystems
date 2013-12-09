@@ -68,13 +68,13 @@ static int read_word( FILE* file, char* into, int size ) {
 }
 
 /* Some functions for a thread safe trie */
-static file_stat_t* trie_get_safe( trie_t* tr, const char* name ) {
-    file_stat_t* ret;
-    pthread_mutex_lock( & g_trie_mutex ) ;
-    ret = trie_get( tr, name ) ;
-    pthread_mutex_unlock( & g_trie_mutex ) ;
-    return ret ;
-}
+//static file_stat_t* trie_get_safe( trie_t* tr, const char* name ) {
+//    file_stat_t* ret;
+//    pthread_mutex_lock( & g_trie_mutex ) ;
+//    ret = trie_get( tr, name ) ;
+//    pthread_mutex_unlock( & g_trie_mutex ) ;
+//    return ret ;
+//}
 
 static void trie_put_safe( trie_t* tr, const char* name, file_stat_t* val ) {
     pthread_mutex_lock( & g_trie_mutex ) ;

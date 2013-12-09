@@ -209,4 +209,5 @@ int run_client( client_t* client ) {
     void*(*state)(client_t*) ;
     state = init_state ;
     while( state ) state = CAST( state( client ) );
+    return 0 ;
 }

@@ -9,3 +9,4 @@ client_:
 
 clean:
 	rm -rf *.o client server
+	rm -rf client.dSYM/ server.dSYM/

@@ -188,7 +188,7 @@ int start_server_socket( uint16_t port, void (*callback)( callback_args_t* args 
     }
 
     pthread_t tmp;
-    callback_args_t argstmp;
+    callback_args_t* argstmp;
 
     int fd;
     while( 1 ) {
@@ -199,9 +199,12 @@ int start_server_socket( uint16_t port, void (*callback)( callback_args_t* args 
             return -1;
         }
 
-        argstmp.fd = fd;
+        argstmp = malloc( sizeof( callback_args_t ) ) ;
+
+        argstmp->fd = fd;
         verbose( "Accepted connection\n" );
-        pthread_create( &tmp, NULL, ((void*(*)(void*))callback), &argstmp ) ;
+
+        pthread_create( &tmp, NULL, ((void*(*)(void*))callback), argstmp ) ;
     }
     
     return 0;

@@ -22,10 +22,8 @@
 #include <ctype.h>
 #include <unistd.h>
 
-pthread_mutex_t g_map_mutex;
+pthread_mutex_t g_mutex;
 trie_t          g_file_map;
-
-pthread_mutex_t g_client_set_mutex;
 trie_set_t      g_client_set;
 
 int VERBOSE = 1;
@@ -81,6 +79,9 @@ void connection_callback( callback_args_t* args ) {
 
     while( ! feof( asfile ) ) {
         read_word( asfile, word, 128 );
+
+        pthread_mutex_lock( & g_mutex ) ;
+        
         if( ! strcmp( word, "REGISTER" ) ) {
             read_word( asfile, word, 128 );      
             verbose( "Determining if client %s exists\n", word );
@@ -88,6 +89,7 @@ void connection_callback( callback_args_t* args ) {
             if( trie_set_contains( &g_client_set, word ) ) {
                 verbose( "Client %s is already registered, aborting\n", word );
                 fclose( asfile );
+                pthread_mutex_unlock( & g_mutex ) ;
                 return ;
             } else {
                 trie_set_insert( &g_client_set, word ) ;
@@ -115,6 +117,8 @@ void connection_callback( callback_args_t* args ) {
             trie_iterate( &g_file_map, ITERATE_FUNCTION( deregister_itr ), &tmpargs );
         }
     }
+
+    pthread_mutex_unlock( & g_mutex ) ;
 }
 
 int start_server_socket( uint16_t port, void (*callback)( callback_args_t* args ) ) {
@@ -181,6 +185,8 @@ int main( int argc, char** argv ) {
         fprintf( stderr, "Must supply a port number\n" ) ;
         return 1 ;
     }
+
+    pthread_mutex_init( & g_mutex, NULL );
     
     uint16_t port;
     if( parse_port_num( argv[1], &port ) ) {

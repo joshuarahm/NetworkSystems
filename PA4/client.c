@@ -67,23 +67,25 @@ void peer_listener(int *fd) {
 		}
 
 		for (i=0; i < 8191; i++) {
-			fname[i] = read(peer, fname+i, 1);
-			if (fname[i] == '\00')
+			read(peer, fname+i, 1);
+			if (fname[i] == '\n')
 				break;
 		}
 		fname[i] = '\00';
 		struct stat fstat;
-		if (stat(fname, &fstat)) {
+		if (stat(fname, &fstat) == 0) {
 			f_size = htonl(fstat.st_size);
 			write(peer, &f_size, sizeof(uint32_t));
+			fprintf(stdout, "\nSending file %s.\n", fname);
 			tmp = fopen(fname, "r");
-			while ((bytes_read = fread(inbuf, 4096, sizeof(char), tmp))) {
+			while ((bytes_read = fread(inbuf, sizeof(char), 4096, tmp)) != 0) {
+				fprintf(stdout, "Wrote %d bytes.\n", bytes_read);
 				write(peer, inbuf, bytes_read);
 			}
 			fclose(tmp);
 			close(peer);
 		} else {
-			fprintf(stderr, "Could not open file: %s\n", fname);
+			fprintf(stderr, "Could not open file: '%s'\n", fname);
 			close(peer);
 			continue;
 		}

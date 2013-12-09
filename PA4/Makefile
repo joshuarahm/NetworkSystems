@@ -6,3 +6,6 @@ server_:
 
 client_:
 	gcc $(CFLAGS) -o client client_state_machine.c client.c pa4str.c trie.c trie_set.c -lpthread
+
+clean:
+	rm -rf *.o client server

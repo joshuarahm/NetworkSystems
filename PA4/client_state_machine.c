@@ -29,7 +29,7 @@ void* list_files( client_t* cli ) {
         }
         stat = read_file_stat_end( cli->as_file, & end ) ;
     } while ( stat && ! end ) ;
-
+;
     return wait_for_input ;
 }
 
@@ -45,7 +45,10 @@ void* wait_for_input( client_t* cli ) {
     if( !strcmp( line, "ls\n" ) ) {
         ret = list_files ;
     } else {
-        fprintf( stderr, "%s: command not found!\n", line ) ;
+		if (strlen(line) > 0)
+			line[strlen(line)-1] = '\0';
+		if (strlen(line) > 0)
+			fprintf( stderr, "%s: command not found!\n", line ) ;
         ret = wait_for_input ;
     }
 

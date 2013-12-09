@@ -20,6 +20,8 @@ int SERVER_FD;
 char SERVER_NAME[1024];
 
 void sigint_handler(int sig) {
+    (void) sig ;
+
 	char buf[2048];
 	snprintf(buf, 2048, "DEREGISTER %s\n", SERVER_NAME);
 	printf("\n");

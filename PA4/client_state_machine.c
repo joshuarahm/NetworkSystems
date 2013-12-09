@@ -3,6 +3,8 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/stat.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>
 #include <dirent.h>
 
 #define CAST( func ) \
@@ -56,7 +58,10 @@ void* wait_for_input( client_t* cli ) {
     return ret ;
 };
 
-static void write_stats( int fd, struct stat* stats, char* filename, char* name ) {
+static void write_stats( int fd, struct stat* stats, char* filename, char* name, int peer_fd ) {
+	struct sockaddr_in sockinfo;
+	socklen_t socklen;
+	getsockname(peer_fd, (struct sockaddr*) &sockinfo, &socklen);
     file_stat_t filestats ;   
     filestats._m_file_name = filename ;
     filestats._m_file_size = stats->st_size ;
@@ -64,7 +69,7 @@ static void write_stats( int fd, struct stat* stats, char* filename, char* name 
     // TODO change this
     filestats._m_owner = name ;
     filestats._m_host_name = "";
-    filestats._m_port = 0 ;
+    filestats._m_port = ntohs(sockinfo.sin_port);
 
     const char* nf = "NEWFILE " ;
     write( fd, nf, strlen( nf ) ) ;
@@ -82,7 +87,7 @@ void* post_files( client_t* cli ) {
     if( dir ) {
         while( (ent = readdir( dir )) != NULL ) {
             if( stat( ent->d_name, & stats ) == 0 ) {
-                write_stats( cli->fd, & stats, ent->d_name, cli->name ) ;
+                write_stats( cli->fd, & stats, ent->d_name, cli->name, cli->peer_fd ) ;
             } else {
                 fprintf( stderr, "Warning: unable to stat file %s\n", ent->d_name ) ;
             }

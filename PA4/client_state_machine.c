@@ -79,6 +79,12 @@ void* wait_for_input( client_t* cli ) {
         ret = list_files ;
     } else if ( ! strncmp( line, "get ", 4) ) {
         char* filename = line  + 4 ;
+        int len = strlen( filename );
+
+        if( filename[len-1] == '\n' ) {
+            filename[len-1] = '\0' ;
+        }
+
         file_stat_t* fs = trie_get( &cli->files, filename ) ;
         if( fs ) {
             int fd = connect_client( fs->_m_host_name, fs->_m_port ) ;
@@ -94,7 +100,7 @@ void* wait_for_input( client_t* cli ) {
                     perror( "Unable to open file for read" ) ;
                 } else {
                     char buf[ 4096 ] ;
-                    snprintf( buf, sizeof( buf ), "%s\b", filename ) ;
+                    snprintf( buf, sizeof( buf ), "%s\n", filename ) ;
                     write( fd, buf, strlen(buf) ) ;
                     read( fd, & len, sizeof( len ) ) ;
                     len = ntohl( len ) ;
@@ -112,12 +118,11 @@ void* wait_for_input( client_t* cli ) {
                     }
                 }
             }
-
-            return wait_for_input ;
         } else {
             fprintf( stderr, "No such file, maybe try an ls to refresh\n" ) ;
         }
-        
+
+        ret = wait_for_input ;
     } else {
 		if (strlen(line) > 0)
 			line[strlen(line)-1] = '\0';

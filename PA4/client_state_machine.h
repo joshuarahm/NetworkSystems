@@ -20,4 +20,6 @@ typedef struct {
 
 int run_client( client_t* client ) ;
 
+int connect_client( const char* hostname, uint16_t port ) ;
+
 #endif /* CLIENT_STATE_MACHINE_H_ */

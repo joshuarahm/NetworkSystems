@@ -4,7 +4,7 @@ Programming Assignment 4
 	Zach Anders
 
 Summary:
-	We believe we completed the assignment to specification:
+	We have completed the assignment to specification:
 		- Clients can connect via TCP
 		- Clients interact with peers for file transfers
 		- Clients support commands 'ls', 'get', and 'exit'/Ctrl-C

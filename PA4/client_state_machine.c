@@ -2,6 +2,8 @@
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <sys/stat.h>
+#include <dirent.h>
 
 #define CAST( func ) \
     ( void*(*)( client_t* ) )(func)
@@ -40,16 +42,54 @@ void* wait_for_input( client_t* cli ) {
 
     printf( "p2pget > " ) ;
     getline( & line, & len, stdin ) ;
-    if( strcmp( line, "ls" ) ) {
+    if( !strcmp( line, "ls\n" ) ) {
         ret = list_files ;
+    } else {
+        fprintf( stderr, "%s: command not found!\n", line ) ;
+        ret = wait_for_input ;
     }
 
     free( line ) ;
     return ret ;
 };
 
-void* post_files( client_t* cli ) {
+static void write_stats( int fd, struct stat* stats, char* filename ) {
+    file_stat_t filestats ;   
+    char josh[16] ;
+    strcpy( josh, "Josh" ) ;
+    filestats._m_file_name = filename ;
+    filestats._m_file_size = stats->st_size ;
     
+    // TODO change this
+    filestats._m_owner = josh ;
+    filestats._m_host_name = "";
+    filestats._m_port = 0 ;
+
+    const char* nf = "NEWFILE " ;
+    write( fd, nf, strlen( nf ) ) ;
+    write_file_stat( fd, &filestats ) ;
+}
+
+void* post_files( client_t* cli ) {
+    printf( "Posting Files\n" ) ;
+    DIR *dir ;
+    struct dirent *ent ;
+
+    dir= opendir( "." ) ;
+    struct stat stats ;
+
+    if( dir ) {
+        while( (ent = readdir( dir )) != NULL ) {
+            if( stat( ent->d_name, & stats ) == 0 ) {
+                write_stats( cli->fd, & stats, ent->d_name ) ;
+            } else {
+                fprintf( stderr, "Warning: unable to stat file %s\n", ent->d_name ) ;
+            }
+        }
+    } else {
+        fprintf( stderr, "Warning: unable to open current directory\n" ) ;
+    }
+
     return wait_for_input ;
 }
 

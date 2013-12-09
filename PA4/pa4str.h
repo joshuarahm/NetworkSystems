@@ -18,7 +18,6 @@ typedef struct {
     char*    _m_owner ;
     char*    _m_host_name ;
     uint16_t _m_port ;
-    int eof ;
 } file_stat_t ;
 
 /* Reads a file_stat_t from a file descriptor */

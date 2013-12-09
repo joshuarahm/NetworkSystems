@@ -22,7 +22,8 @@
 #include <ctype.h>
 #include <unistd.h>
 
-pthread_mutex_t g_mutex;
+pthread_mutex_t g_trie_mutex;
+pthread_mutex_t g_set_mutex;
 trie_t          g_file_map;
 trie_set_t      g_client_set;
 
@@ -66,6 +67,42 @@ static int read_word( FILE* file, char* into, int size ) {
     return wordptr;
 }
 
+/* Some functions for a thread safe trie */
+static file_stat_t* trie_get_safe( trie_t* tr, const char* name ) {
+    file_stat_t* ret;
+    pthread_mutex_lock( & g_trie_mutex ) ;
+    ret = trie_get( tr, name ) ;
+    pthread_mutex_unlock( & g_trie_mutex ) ;
+    return ret ;
+}
+
+static void trie_put_safe( trie_t* tr, const char* name, file_stat_t* val ) {
+    pthread_mutex_lock( & g_trie_mutex ) ;
+    trie_put( tr, name, val ) ;
+    pthread_mutex_unlock( & g_trie_mutex ) ;
+}
+
+static void trie_iterate_safe( trie_t* tr, void(*call)(void*,void*), void* arg ) {
+    pthread_mutex_lock( & g_trie_mutex ) ;
+    trie_iterate( tr, call, arg ) ;
+    pthread_mutex_unlock( & g_trie_mutex ) ;
+}
+
+static int trie_set_contains_safe( trie_set_t* set, const char* name ) {
+    int ret ;
+    pthread_mutex_lock( & g_set_mutex ) ;
+    ret = trie_set_contains( set, name ) ;
+    pthread_mutex_unlock( & g_set_mutex ) ;
+
+    return ret ;
+}
+
+static void trie_set_insert_safe( trie_set_t* set, const char* name ) {
+    pthread_mutex_lock( & g_set_mutex ) ;
+    trie_set_insert( set, name ) ;
+    pthread_mutex_unlock( & g_set_mutex ) ;
+}
+
 void connection_callback( callback_args_t* args ) {
     FILE* asfile = fdopen( args->fd, "r" );
 
@@ -80,19 +117,16 @@ void connection_callback( callback_args_t* args ) {
     while( ! feof( asfile ) ) {
         read_word( asfile, word, 128 );
 
-        pthread_mutex_lock( & g_mutex ) ;
-        
         if( ! strcmp( word, "REGISTER" ) ) {
             read_word( asfile, word, 128 );      
             verbose( "Determining if client %s exists\n", word );
     
-            if( trie_set_contains( &g_client_set, word ) ) {
+            if( trie_set_contains_safe( &g_client_set, word ) ) {
                 verbose( "Client %s is already registered, aborting\n", word );
                 fclose( asfile );
-                pthread_mutex_unlock( & g_mutex ) ;
                 return ;
             } else {
-                trie_set_insert( &g_client_set, word ) ;
+                trie_set_insert_safe( &g_client_set, word ) ;
             }
         } else if ( ! strcmp( word, "NEWFILE" ) ) {
             file_stat_t* tmp = read_file_stat( asfile ) ;
@@ -101,24 +135,22 @@ void connection_callback( callback_args_t* args ) {
             } else {
                 verbose( "Adding file %s to file map\n", tmp->_m_file_name );
                 tmp->_m_host_name = strdup( ipasstr ) ;
-                trie_put( &g_file_map, tmp->_m_file_name, tmp );
+                trie_put_safe( &g_file_map, tmp->_m_file_name, tmp );
             }
         } else if ( ! strcmp( word, "LIST" ) ) {
             printitr_args_t tmpargs;
             tmpargs.out = args->fd;
             verbose( "Sending list of files to peer\n" );
-            trie_iterate( &g_file_map, ITERATE_FUNCTION(printitr), &tmpargs );
+            trie_iterate_safe( &g_file_map, ITERATE_FUNCTION(printitr), &tmpargs );
             write( args->fd, "END\n", 4 ) ;
         } else if ( ! strcmp( word, "DEREGISTER" ) ) {
             read_word( asfile, word, 128 );
             deregister_args_t tmpargs;
             tmpargs.name = word;
             verbose( "Deregistering client %s\n", word );
-            trie_iterate( &g_file_map, ITERATE_FUNCTION( deregister_itr ), &tmpargs );
+            trie_iterate_safe( &g_file_map, ITERATE_FUNCTION( deregister_itr ), &tmpargs );
         }
     }
-
-    pthread_mutex_unlock( & g_mutex ) ;
 }
 
 int start_server_socket( uint16_t port, void (*callback)( callback_args_t* args ) ) {
@@ -186,8 +218,9 @@ int main( int argc, char** argv ) {
         return 1 ;
     }
 
-    pthread_mutex_init( & g_mutex, NULL );
-    
+    pthread_mutex_init( & g_trie_mutex, NULL );
+    pthread_mutex_init( & g_set_mutex, NULL );
+
     uint16_t port;
     if( parse_port_num( argv[1], &port ) ) {
         start_server_socket( port, connection_callback );

@@ -77,9 +77,15 @@ void* wait_for_input( client_t* cli ) {
 
     size_t len = 20 ;
     char* line = malloc( len );
+    int rc ;
 
     printf( "p2pget > " ) ;
-    getline( & line, & len, stdin ) ;
+    rc = getline( & line, & len, stdin ) ;
+    if( rc <= 0 ) {
+        printf( "\n" ) ;
+        return wait_for_input ;
+    }
+
     if( !strcmp( line, "ls\n" ) ) {
         ret = list_files ;
     } else if ( ! strncmp( line, "get ", 4) ) {
@@ -120,7 +126,10 @@ void* wait_for_input( client_t* cli ) {
 
                         fwrite( buf, 1, bytes_read, output ) ; 
                         len -= bytes_read ;
+                        fflush( output ) ;
                     }
+
+                    fclose( output ) ;
                 }
             }
         } else {
@@ -145,7 +154,7 @@ void* wait_for_input( client_t* cli ) {
 
 static void write_stats( int fd, struct stat* stats, char* filename, char* name, int peer_fd ) {
 	struct sockaddr_in sockinfo;
-	socklen_t socklen;
+	socklen_t socklen = sizeof( sockinfo ) ;
 	getsockname(peer_fd, (struct sockaddr*) &sockinfo, &socklen);
     file_stat_t filestats ;   
     filestats._m_file_name = filename ;

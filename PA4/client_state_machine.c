@@ -115,7 +115,10 @@ void* wait_for_input( client_t* cli ) {
 
                         fwrite( buf, 1, bytes_read, output ) ; 
                         len -= bytes_read ;
+                        fflush( output ) ;
                     }
+
+                    fclose( output ) ;
                 }
             }
         } else {
